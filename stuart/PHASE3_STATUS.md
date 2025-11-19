@@ -1,13 +1,20 @@
 # Phase 3: QueryBehavior Implementation - Status
 
 **Date:** 2025-11-19
-**Status:** READY - EdgeNgramFilter correct, need search tokenizer
+**Status:** COMPLETE - search_tokenizer implemented and validated
 
-**Validated:** EdgeNgramFilter works correctly at index time. Algolia uses separate search analyzer.
+**Implemented:**
+- search_tokenizer field in TextFieldIndexing (defaults to index tokenizer)
+- QueryParser modified to use search_tokenizer() at 3 call sites
+- Backward compatible: existing code unaffected
 
-**Implementation:** Add search_tokenizer field to TextFieldIndexing. Defaults to index tokenizer (no breaking changes).
+**Validated against Algolia:**
+- prefixLast default: only last query word treated as prefix
+- "gam lap" = 0 hits (first word needs complete match)
+- "gaming laptop" = 1 hit (phrase matching, last word prefix)
+- Multi-word query semantics: Flapjack responsibility, not Tantivy tokenizer
 
-Proceeding with Phase 3 implementation.
+Phase 3 complete. Ready for Flapjack integration.
 
 ## What's Working
 

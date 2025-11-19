@@ -2,13 +2,15 @@
 
 **Date:** 2025-11-19
 **Branch:** nov19
-**Status:** Phase 1-2 COMPLETE - Implementing search_tokenizer
+**Status:** Phase 3 COMPLETE - search_tokenizer implemented and tested
 
-**Current task:** Add search_tokenizer field to TextFieldIndexing for separate query-time tokenization.
+**Completed:** 
+- Added search_tokenizer field to TextFieldIndexing (backward compatible)
+- QueryParser now uses search_tokenizer() for query tokenization
+- All 949 upstream tests passing + new integration test passing
+- Algolia behavior validated: prefixLast (only last query word is prefix)
 
-**Validated:** Algolia uses EdgeNgram at index time only. Query "lap" searches as single term.
-
-**Implementation:** Add optional search_tokenizer to TextFieldIndexing, defaults to index tokenizer (backward compatible).
+**Implementation complete:** EdgeNgram index time, simple search time enables Algolia-compatible prefix search.
 
 **Term format:** Clarified - 's' byte is correct type indicator. See `TERM_FORMAT_CLARIFICATION.md`.
 

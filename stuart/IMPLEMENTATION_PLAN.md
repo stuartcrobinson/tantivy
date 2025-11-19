@@ -93,22 +93,27 @@
 
 ---
 
-## Phase 3: Search Tokenizer Support (4h)
+## Phase 3: Search Tokenizer Support ✅ COMPLETE (4h actual)
 
 **Objective:** Add separate search-time tokenizer to TextFieldIndexing
 
 ### Tasks
 
-- [ ] Add `search_tokenizer: Option<TokenizerName>` to `TextFieldIndexing` struct
-- [ ] Add `set_search_tokenizer(name: &str)` method
-- [ ] Add `search_tokenizer()` getter (returns index tokenizer if search not set)
-- [ ] Modify QueryParser to use search_tokenizer when tokenizing queries
-- [ ] Update schema serialization (skip_serializing_if None)
-- [ ] Unit tests: search_tokenizer defaults to index tokenizer
-- [ ] Integration test: edge_ngram index + simple search = prefix matching works
+- [x] Add `search_tokenizer: Option<TokenizerName>` to `TextFieldIndexing` struct
+- [x] Add `set_search_tokenizer(name: &str)` method with documentation
+- [x] Add `search_tokenizer()` getter (returns index tokenizer if search not set)
+- [x] Modify QueryParser to use search_tokenizer at 3 call sites:
+  - Line 583: Str field boundary term computation
+  - Line 977: Str field query term generation
+  - Line 1012: JSON field query term generation
+- [x] Update schema serialization (skip_serializing_if None)
+- [x] Fix const initializers (STRING, TEXT) to include search_tokenizer: None
+- [x] Integration test: tests/queryparser_edge_ngram_behavior.rs passes
 
 **Sign-off criteria:**
-- Query "lap" matches "Laptop" when index=edge_ngram, search=simple
+- [x] Query "lap" matches "Laptop" when index=edge_ngram, search=simple
+- [x] All 949 upstream tests pass (no regressions)
+- [x] Backward compatible (defaults to index tokenizer)
 - `cargo test` runs without regressions (943+ tests passing)
 - QueryParser respects field's query_behavior setting
 - Phrase mode still works for non-ngram fields

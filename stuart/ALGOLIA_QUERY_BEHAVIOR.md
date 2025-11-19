@@ -2,7 +2,7 @@
 
 **Date:** 2025-11-19
 **Method:** Live API testing
-**Conclusion:** Queries are NOT tokenized to ngrams
+**Conclusion:** Queries are NOT tokenized to ngrams. Only last query word treated as prefix (prefixLast).
 
 ## Test Results
 
@@ -46,6 +46,25 @@
 
 **Fix required:** Configure separate search analyzer in schema.
 
+## Multi-Word Query Behavior (Validated 2025-11-19)
+
+**Test Results:**
+- "gaming laptop" → 1 hit (Gaming Laptop) - both words must match, phrase-like
+- "gam lap" → 0 hits - first word needs complete match (prefixLast)
+- "laptop gaming" → 1 hit - order flexibility via proximity ranking
+- "mouse stand" → 0 hits - AND semantics, both must be in same doc
+
+**Algolia Default: prefixLast**
+- Only last query word treated as prefix
+- Earlier words require complete word matches
+- Multi-word = phrase matching with proximity ranking
+- This is Flapjack/QueryParser responsibility, not Tantivy tokenizer
+
+**Tantivy Implementation:**
+- Tokenizer: EdgeNgram at index, simple at query (correct)
+- QueryParser: Creates appropriate query structure (BooleanQuery, PhraseQuery)
+- Ranking/proximity: Flapjack layer concern
+
 ## Evidence
 
-`stuart/research/algolia_test_1/critical_test_v2.js` - Test 5 proves query not tokenized.
+`stuart/research/algolia_test_1/critical_test_v2.js` - Tests 5-9 validate behavior.
