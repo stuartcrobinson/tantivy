@@ -65,16 +65,16 @@ Result: `[unordered_id][s][token_bytes]` → serialized as `"path\0stoken"`
 
 ## Why Queries Work Anyway
 
-**Theory:** `Term::from_field_json_path()` + `append_type_and_str()` constructs:
-```
-[field][j]["title"][null][s]["lap"]
-```
+**Validated (test_compare_indexed_vs_query_term_bytes):**
 
-During lookup, path string "title" gets converted to same unordered_id used during indexing. The 's' placement matches on both sides.
+Indexed term: `[74, 69, 74, 6c, 65, 00, 73, 6c, 61, 70]` = `"title\0slap"`
+Query term: `[00, 00, 00, 00, 6a, 74, 69, 74, 6c, 65, 00, 73, 6c, 61, 70]` = `"\0\0\0\0jtitle\0slap"`
 
-**Evidence:** All 3 e2e tests show:
-- Corruption visible in raw term bytes
-- Queries return correct results (1 hit)
+Query has 5-byte prefix `[field:4][type='j':1]`, then identical suffix to indexed term. The 's' byte (0x73) appears after path terminator (0x00) in both cases.
+
+**Direct term lookup:** Returns `FOUND` - proves corruption is symmetric.
+
+**Evidence:** 3 e2e tests + 2 validation tests confirm queries work despite corruption.
 
 ## Implications
 
