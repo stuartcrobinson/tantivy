@@ -1,16 +1,25 @@
 # Tantivy Fork Status
 
-**Date:** 2025-11-19
+**Date:** 2025-11-19 (Updated Evening)
 **Branch:** nov19
-**Status:** Phase 3 COMPLETE - search_tokenizer implemented and tested
+**Status:** Tantivy implementation complete, Flapjack integration unvalidated
 
-**Completed:** 
-- Added search_tokenizer field to TextFieldIndexing (backward compatible)
-- QueryParser now uses search_tokenizer() for query tokenization
-- All 949 upstream tests passing + new integration test passing
-- Algolia behavior validated: prefixLast (only last query word is prefix)
+**Completed (Tantivy layer):**
+- EdgeNgramFilter: 6 unit tests passing
+- search_tokenizer field: added to TextFieldIndexing, backward compatible
+- QueryParser: modified to use search_tokenizer() (3 call sites)
+- All 949 upstream tests + 10 new tests passing
+- Single-word prefix validated: "lap" matches "Laptop"
 
-**Implementation complete:** EdgeNgram index time, simple search time enables Algolia-compatible prefix search.
+**Critical gap:**
+- Zero Flapjack integration tests
+- Assumption: JSON fields + custom tokenizers work via public API
+- Risk: May have built wrong abstraction for Flapjack's actual usage
+
+**Implementation approach:**
+- Diverged from spec (QueryMode enum never built)
+- Used search_tokenizer field instead
+- Simpler but unvalidated in Flapjack context
 
 **Term format:** Clarified - 's' byte is correct type indicator. See `TERM_FORMAT_CLARIFICATION.md`.
 
@@ -46,7 +55,25 @@ test tokenizer::edge_ngram_filter::tests::test_edge_ngram_invalid_range ... ok (
 - EdgeNgramFilter correctly operates on pre-tokenized words
 - "Gaming Laptop" → ["ga", "gam", "gami", "gamin", "gaming", "la", "lap", "lapt", "lapto", "laptop"]
 
-## Next: Phase 2 - Integration Tests (3h)
+## Next Steps
+
+**Before declaring complete:**
+1. Write Flapjack integration test
+2. Validate JSON field + custom tokenizer via public API
+3. If fails: debug actual requirements, may need QueryMode approach
+
+**After Flapjack validation:**
+1. Update all docs to reflect tested reality
+2. Clean up debug_spikes/ directory
+3. Performance testing at scale
+
+## Test Organization
+
+**Production tests:** `tests/search_tokenizer_*.rs`, `tests/queryparser_edge_ngram_behavior.rs`
+**Debug tests:** `tests/debug_spikes/*` (can delete after confident)
+**Unit tests:** `src/tokenizer/edge_ngram_filter.rs`, `tests/search_tokenizer_unit.rs`
+
+## Next: Phase 2 - Integration Tests (3h) [OBSOLETE - COMPLETED]
 
 **File:** `tests/edge_ngram_json_integration.rs`
 
