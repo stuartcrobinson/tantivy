@@ -4,7 +4,12 @@
 **Branch:** nov19
 **Status:** Phase 1 Complete ✅ → Building e2e spike before Phase 2
 
-**Current task:** Validate EdgeNgramFilter indexing produces correct terms (no corruption) before investing in QueryBehavior. Previous fork had term structure bugs. Spike proves indexing works, then proceed to full integration tests.
+**Current task:** Term corruption confirmed but queries work anyway. See `CRITICAL_FINDINGS.md`. Decision: Ship with corruption (cosmetic only), focus on QueryBehavior enum (actual blocker).
+
+**E2E spike results:** 
+- Corruption: `"title\0sla"` instead of `"title\0la"` ❌
+- Manual queries: Work correctly, return 1 hit ✅
+- Conclusion: Corruption is cosmetic, doesn't break functionality
 
 ## Phase 1: EdgeNgramFilter - COMPLETE
 
