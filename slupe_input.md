@@ -1,535 +1,122 @@
 === SLUPE RESULTS ===
-📋 Output copied to clipboard @ 06:17:02.258 pm
+📋 Output copied to clipboard @ 06:26:40.328 pm
 ---------------------
-mN9 ✅ write_file /Users/stuart/repos/tantivy/stuart/HANDOVER_UPDATED.md
-pK4 ✅ replace_text_in_file /Users/stuart/repos/tantivy/stuart/STATUS.md
-xL7 ✅ replace_text_in_file /Users/stuart/repos/tantivy/stuart/STATUS.md
-qR2 ✅ replace_text_in_file /Users/stuart/repos/tantivy/stuart/STATUS.md
-vM8 ✅ write_file /Users/stuart/repos/tantivy/stuart/WHAT_WE_BUILT_VS_SPEC.md
+m8p ❌ write_file /Users/stuart/repos/flapjack202511/tests/test_json_prefix_search.rs - Write access denied for
 === END ===
+I'll create a Flapjack integration test to validate the fork actually solves the prefix search problem. This is the critical validation missing from your handover docs.
+
 ```sh nesl
-#!nesl [@three-char-SHA-256: mN9]
+#!nesl [@three-char-SHA-256: m8p]
 action = "write_file"
-path = "/Users/stuart/repos/tantivy/stuart/HANDOVER_UPDATED.md"
-content = <<'EOT_mN9'
-# Tantivy Fork - Handover Document (Updated 2025-11-19)
-
-**Branch:** nov19
-**Status:** Tantivy layer complete, Flapjack integration unvalidated
-
-## What's Implemented
-
-### 1. EdgeNgramFilter (Phase 1)
-**File:** `src/tokenizer/edge_ngram_filter.rs`
-**Status:** Complete, 6 unit tests passing
-**Function:** Generates edge ngrams per word post-tokenization
-- "Laptop" → ["la", "lap", "lapt", "lapto", "laptop"]
-- Operates on tokenized output (not raw text)
-- UTF-8 character boundary safe
-
-### 2. search_tokenizer Field (Phase 3)
-**Files:** 
-- `src/schema/text_options.rs` - TextFieldIndexing struct
-- `src/query/query_parser/query_parser.rs` - 3 call sites modified
-
-**API:**
-```rust
-TextFieldIndexing::default()
-    .set_tokenizer("edge_ngram")           // Index time
-    .set_search_tokenizer("simple")        // Query time
-    .set_index_option(IndexRecordOption::WithFreqsAndPositions)
-```
-
-**Behavior:**
-- Defaults to index tokenizer when unset (backward compatible)
-- QueryParser calls `field.search_tokenizer()` instead of `field.tokenizer()`
-- Enables separate index/query tokenization strategies
-
-### 3. Test Coverage
-**Production tests (in `tests/`):**
-- `queryparser_edge_ngram_behavior.rs` - Single-word prefix validation
-- `search_tokenizer_persistence.rs` - Schema serialization roundtrip
-- `search_tokenizer_multi_field.rs` - Field independence
-- `search_tokenizer_validation.rs` - Default behavior
-
-**Debug tests (in `tests/debug_spikes/`):**
-- `edge_ngram_e2e_spike.rs` - Term format investigation
-- `check_token_positions.rs` - Position bug analysis
-- `compare_term_bytes.rs` - Term byte structure validation
-- `phrase_query_position_debug.rs` - PhraseQuery behavior
-- `verify_query_term_bytes.rs` - Query construction debug
-- `upstream_json_text_baseline.rs` - Upstream behavior baseline
-
-**Unit tests:**
-- `src/tokenizer/edge_ngram_filter.rs` - 6 tests
-- `tests/search_tokenizer_unit.rs` - 3 tests (kept as integration)
-
-**Results:** All 949 upstream tests + 10 new tests passing
-
-## Implementation Approach
-
-**Original spec (`TANTIVY_FORK_SPECIFICATION.md`):**
-- Proposed `QueryMode` enum (TermsOr, TermsAnd, Phrase)
-- Would change query structure from PhraseQuery to BooleanQuery
-
-**Actual implementation:**
-- Added `search_tokenizer` field instead
-- Bypasses problem at tokenization layer, not query structure layer
-- Simpler, less invasive
-
-**Why different:**
-- `search_tokenizer` leverages existing tokenizer infrastructure
-- No QueryParser query construction logic changes needed
-- Cleaner separation: tokenization vs query structure
-
-**Trade-off:**
-- Spec approach: explicit control over query semantics
-- Implemented approach: implicit via tokenizer selection
-- Both solve prefix search, implemented approach less code
-
-## Validated Behavior
-
-**Single-word prefix (test: queryparser_edge_ngram_behavior.rs):**
-- Index: "Gaming Laptop" with edge_ngram tokenizer
-- Query: "lap" with simple tokenizer
-- Result: 1 hit ✅
-
-**Mechanism:**
-1. Index time: "Laptop" → ["la", "lap", "lapt", "lapto", "laptop"]
-2. Query time: "lap" → ["lap"] (single term, no ngrams)
-3. TermQuery for "lap" matches indexed term "lap"
-
-**Multi-word queries:**
-- Not tested in Tantivy
-- Per Algolia behavior: "gaming laptop" = phrase with last-word prefix
-- Flapjack's responsibility to handle via QueryParser configuration
-
-## Known Issues
-
-### 1. Term Format (Cosmetic, Non-Blocking)
-**Symptom:** Terms indexed as `"title\0slap"` instead of `"title\0lap"`
-**Analysis:** 's' byte is Type::Str indicator, not corruption
-**Impact:** None - queries work, both sides construct identical terms
-**Evidence:** `tests/debug_spikes/compare_term_bytes.rs`
-**Decision:** Ship as-is, cosmetic only
-
-### 2. Position Assignment (Documented, Ignored)
-**Symptom:** EdgeNgramFilter assigns same position to all ngrams from one word
-**Expected:** Increment position per ngram
-**Impact:** PhraseQuery accidentally works due to matching relative offsets
-**Why we don't care:** search_tokenizer bypasses PhraseQuery entirely
-**Evidence:** `tests/debug_spikes/check_token_positions.rs`
-
-### 3. Multi-Word Query Semantics (Out of Scope)
-**Not implemented:** prefixLast vs prefixAll modes
-**Reason:** QueryParser configuration, not tokenizer concern
-**Algolia behavior:** Only last query word treated as prefix by default
-**Flapjack action required:** Configure QueryParser to match Algolia semantics
-
-## Critical Gap: Flapjack Integration
-
-**Unvalidated assumption:** JSON fields work with custom tokenizers via public API
-
-**What we tested:**
-```rust
-// In Tantivy tests
-let text_indexing = TextFieldIndexing::default()
-    .set_tokenizer("edge_ngram")
-    .set_search_tokenizer("simple");
-
-let json_options = JsonObjectOptions::default()
-    .set_indexing_options(text_indexing);
-```
-
-**What we didn't test:**
-- Does Flapjack configure schemas this way?
-- Does Flapjack's document indexing pipeline respect these settings?
-- Does Flapjack's query parser use search_tokenizer?
-
-**Risk:** Flapjack may wrap Tantivy differently, exposing different APIs. Our changes might be inaccessible or insufficient.
-
-**Evidence of risk:**
-- Original spec proposed QueryMode enum (never built)
-- Spec may have been based on Flapjack's actual needs
-- Our implementation diverged without validating Flapjack constraints
-
-## Next Steps
-
-### Immediate (Before Declaring Complete)
-
-1. **Write Flapjack integration test**
-   - Location: Flapjack repo
-   - Test: Index JSON doc, query with prefix, verify hit
-   - Validates public API, not just internals
-   - If fails: reveals actual Flapjack requirements
-
-2. **If Flapjack test passes:**
-   - Update Flapjack Cargo.toml to use fork
-   - Ship to production
-   - Monitor real-world behavior
-
-3. **If Flapjack test fails:**
-   - Debug actual failure mode
-   - May need QueryMode approach after all
-   - Or different API entirely
-
-### Documentation Updates (After Flapjack Validation)
-
-1. Update `TANTIVY_FORK_SPECIFICATION.md` to reflect actual implementation
-2. Remove QueryMode references (never built)
-3. Document search_tokenizer approach
-4. Add Flapjack integration guide
-5. Update CHANGELOG
-
-### Future Enhancements (Post-Launch)
-
-1. **Multi-word query modes:**
-   - prefixAll: all words treated as prefixes
-   - prefixNone: exact match only
-   - Per-field configuration
-
-2. **QueryParser improvements:**
-   - Explicit query mode control (resurrect QueryMode enum?)
-   - Better phrase query handling with ngrams
-   - Performance optimization
-
-3. **Upstream contribution:**
-   - File PR to Tantivy with search_tokenizer
-   - Discuss term format 's' byte (cosmetic fix)
-   - EdgeNgramFilter position increment (correctness)
-
-## Architecture Context
-
-**Tantivy = Lucene equivalent:**
-- Low-level indexing engine
-- Tokenization, term storage, inverted index
-- No opinions on query semantics
-
-**Flapjack = Elasticsearch equivalent:**
-- Query parsing, ranking, distribution
-- API compatibility layer
-- Business logic (Algolia parity)
-
-**Division of responsibility:**
-- Tantivy: tokenization strategies (what we built)
-- Flapjack: query structure, ranking, multi-word semantics
-- Both needed for Algolia parity
-
-## Success Criteria
-
-Fork is production-ready when:
-- [x] EdgeNgramFilter implemented
-- [x] search_tokenizer field added
-- [x] QueryParser uses search_tokenizer
-- [x] Single-word prefix search works in Tantivy tests
-- [x] All upstream tests pass
-- [ ] **Flapjack integration test passes** ← BLOCKER
-- [ ] Multi-word query behavior documented
-- [ ] Performance validated at scale
-
-## Files Changed
-
-**Core implementation:**
-- `src/tokenizer/edge_ngram_filter.rs` (new, 190 lines)
-- `src/tokenizer/mod.rs` (modified, +2 lines)
-- `src/schema/text_options.rs` (modified, +32 lines)
-- `src/query/query_parser/query_parser.rs` (modified, 3 call sites)
-
-**Tests (production):**
-- `tests/queryparser_edge_ngram_behavior.rs` (new)
-- `tests/search_tokenizer_persistence.rs` (new)
-- `tests/search_tokenizer_multi_field.rs` (new)
-- `tests/search_tokenizer_validation.rs` (new)
-- `tests/search_tokenizer_unit.rs` (new)
-
-**Tests (debug, can delete):**
-- `tests/debug_spikes/*` (6 files)
-
-**Documentation:**
-- `stuart/STATUS.md`
-- `stuart/PHASE3_STATUS.md`
-- `stuart/ALGOLIA_QUERY_BEHAVIOR.md`
-- `stuart/IMPLEMENTATION_PLAN.md`
-- `stuart/TERM_FORMAT_CLARIFICATION.md`
-
-## Open Questions
-
-1. **Does Flapjack need QueryMode enum?**
-   - Multi-word queries require explicit OR/AND control
-   - search_tokenizer doesn't address query structure
-   - May need both approaches
-
-2. **Performance impact?**
-   - Edge ngrams increase index size ~81%
-   - Query performance with many small terms?
-   - Need scale testing (100K+ docs)
-
-3. **Upstream contribution strategy?**
-   - Maintain fork indefinitely?
-   - Quarterly upstream merges?
-   - File PR for search_tokenizer feature?
-
-4. **What if Algolia query semantics are more complex?**
-   - prefixLast is default, but configurable
-   - Advanced features: typo tolerance, synonyms, ranking
-   - Do we need deeper QueryParser changes?
-
-## Bottom Line
-
-**Tantivy layer:** Complete and tested
-**Flapjack integration:** Unvalidated assumption
-**Recommendation:** Write Flapjack test before updating any other docs
-**Risk:** 20 hours invested, but may have built wrong abstraction
-
-We built what we thought Flapjack needs. Now verify Flapjack actually needs it.
-EOT_mN9
-#!end_mN9
-```
-
-```sh nesl
-#!nesl [@three-char-SHA-256: pK4]
-action = "replace_text_in_file"
-path = "/Users/stuart/repos/tantivy/stuart/STATUS.md"
-old_text = <<'EOT_pK4'
-# Tantivy Fork Status
-
-**Date:** 2025-11-19
-**Branch:** nov19
-**Status:** Phase 3 COMPLETE - search_tokenizer implemented and tested
-EOT_pK4
-new_text = <<'EOT_pK4'
-# Tantivy Fork Status
-
-**Date:** 2025-11-19 (Updated Evening)
-**Branch:** nov19
-**Status:** Tantivy implementation complete, Flapjack integration unvalidated
-EOT_pK4
-#!end_pK4
-```
-
-```sh nesl
-#!nesl [@three-char-SHA-256: xL7]
-action = "replace_text_in_file"
-path = "/Users/stuart/repos/tantivy/stuart/STATUS.md"
-old_text = <<'EOT_xL7'
-**Completed:** 
-- Added search_tokenizer field to TextFieldIndexing (backward compatible)
-- QueryParser now uses search_tokenizer() for query tokenization
-- All 949 upstream tests passing + new integration test passing
-- Algolia behavior validated: prefixLast (only last query word is prefix)
-
-**Implementation complete:** EdgeNgram index time, simple search time enables Algolia-compatible prefix search.
-EOT_xL7
-new_text = <<'EOT_xL7'
-**Completed (Tantivy layer):**
-- EdgeNgramFilter: 6 unit tests passing
-- search_tokenizer field: added to TextFieldIndexing, backward compatible
-- QueryParser: modified to use search_tokenizer() (3 call sites)
-- All 949 upstream tests + 10 new tests passing
-- Single-word prefix validated: "lap" matches "Laptop"
-
-**Critical gap:**
-- Zero Flapjack integration tests
-- Assumption: JSON fields + custom tokenizers work via public API
-- Risk: May have built wrong abstraction for Flapjack's actual usage
-
-**Implementation approach:**
-- Diverged from spec (QueryMode enum never built)
-- Used search_tokenizer field instead
-- Simpler but unvalidated in Flapjack context
-EOT_xL7
-#!end_xL7
-```
-
-```sh nesl
-#!nesl [@three-char-SHA-256: qR2]
-action = "replace_text_in_file"
-path = "/Users/stuart/repos/tantivy/stuart/STATUS.md"
-old_text = <<'EOT_qR2'
-## Next: Phase 2 - Integration Tests (3h)
-EOT_qR2
-new_text = <<'EOT_qR2'
-## Next Steps
-
-**Before declaring complete:**
-1. Write Flapjack integration test
-2. Validate JSON field + custom tokenizer via public API
-3. If fails: debug actual requirements, may need QueryMode approach
-
-**After Flapjack validation:**
-1. Update all docs to reflect tested reality
-2. Clean up debug_spikes/ directory
-3. Performance testing at scale
-
-## Test Organization
-
-**Production tests:** `tests/search_tokenizer_*.rs`, `tests/queryparser_edge_ngram_behavior.rs`
-**Debug tests:** `tests/debug_spikes/*` (can delete after confident)
-**Unit tests:** `src/tokenizer/edge_ngram_filter.rs`, `tests/search_tokenizer_unit.rs`
-
-## Next: Phase 2 - Integration Tests (3h) [OBSOLETE - COMPLETED]
-EOT_qR2
-#!end_qR2
-```
-
-```sh nesl
-#!nesl [@three-char-SHA-256: vM8]
-action = "write_file"
-path = "/Users/stuart/repos/tantivy/stuart/WHAT_WE_BUILT_VS_SPEC.md"
-content = <<'EOT_vM8'
-# Implementation vs Specification Analysis
-
-**Date:** 2025-11-19
-**Question:** Why did we build search_tokenizer instead of QueryMode enum?
-
-## Original Specification
-
-**File:** `docs/TANTIVY_FORK_SPECIFICATION.md`
-**Proposed:** QueryMode enum
-
-```rust
-pub enum QueryMode {
-    Phrase,      // PhraseQuery (default)
-    TermsOr,     // BooleanQuery with OR
-    TermsAnd,    // BooleanQuery with AND
+path = "/Users/stuart/repos/flapjack202511/tests/test_json_prefix_search.rs"
+content = <<'EOT_m8p'
+use flapjack::index::manager::IndexManager;
+use flapjack::query::SearchQuery;
+use serde_json::json;
+use std::path::PathBuf;
+use tempfile::TempDir;
+
+#[test]
+fn test_single_word_prefix_on_json_field() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut manager = IndexManager::new(temp_dir.path()).unwrap();
+    
+    manager.create_index("products").unwrap();
+    
+    let docs = vec![
+        json!({"objectID": "1", "title": "Gaming Laptop"}),
+        json!({"objectID": "2", "title": "Laptop Stand"}),
+    ];
+    
+    manager.add_documents_simple("products", docs).unwrap();
+    
+    let query = SearchQuery {
+        query: "lap".to_string(),
+        ..Default::default()
+    };
+    
+    let results = manager.search_simple("products", query).unwrap();
+    
+    assert_eq!(results.hits.len(), 2, 
+        "Expected 'lap' prefix to match both 'Gaming Laptop' and 'Laptop Stand'");
+    
+    let titles: Vec<String> = results.hits.iter()
+        .map(|h| h.get("title").unwrap().as_str().unwrap().to_string())
+        .collect();
+    
+    assert!(titles.contains(&"Gaming Laptop".to_string()));
+    assert!(titles.contains(&"Laptop Stand".to_string()));
 }
 
-impl TextFieldIndexing {
-    pub fn set_query_mode(mut self, mode: QueryMode) -> Self;
+#[test]
+fn test_multi_word_query_algolia_semantics() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut manager = IndexManager::new(temp_dir.path()).unwrap();
+    
+    manager.create_index("products").unwrap();
+    
+    let docs = vec![
+        json!({"objectID": "1", "title": "Gaming Laptop"}),
+        json!({"objectID": "2", "title": "Laptop Gaming Mouse"}),
+        json!({"objectID": "3", "title": "Gaming Mouse"}),
+    ];
+    
+    manager.add_documents_simple("products", docs).unwrap();
+    
+    let query = SearchQuery {
+        query: "gaming lap".to_string(),
+        ..Default::default()
+    };
+    
+    let results = manager.search_simple("products", query).unwrap();
+    
+    assert!(results.hits.len() >= 1, 
+        "Expected 'gaming lap' to match at least 'Gaming Laptop' (prefixLast: 'gaming' exact + 'lap' prefix)");
+    
+    let first_title = results.hits[0].get("title").unwrap().as_str().unwrap();
+    assert_eq!(first_title, "Gaming Laptop", 
+        "Expected 'Gaming Laptop' ranked first (both terms match)");
 }
-```
 
-**Usage:**
-```rust
-TextFieldIndexing::default()
-    .set_tokenizer("edge_ngram")
-    .set_query_mode(QueryMode::TermsOr)
-```
-
-**Intent:** Change QueryParser query construction logic for edge ngram fields
-
-## What We Built Instead
-
-**Implementation:** search_tokenizer field
-
-```rust
-impl TextFieldIndexing {
-    pub fn set_search_tokenizer(mut self, name: &str) -> Self;
-    pub fn search_tokenizer(&self) -> &str;
+#[test]
+fn test_prefix_on_nested_json_fields() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut manager = IndexManager::new(temp_dir.path()).unwrap();
+    
+    manager.create_index("products").unwrap();
+    
+    let docs = vec![
+        json!({
+            "objectID": "1", 
+            "product": {
+                "name": "Laptop Computer",
+                "brand": "Dell"
+            }
+        }),
+    ];
+    
+    manager.add_documents_simple("products", docs).unwrap();
+    
+    let query = SearchQuery {
+        query: "lap".to_string(),
+        ..Default::default()
+    };
+    
+    let results = manager.search_simple("products", query).unwrap();
+    
+    assert_eq!(results.hits.len(), 1, 
+        "Expected 'lap' prefix to match nested field 'product.name: Laptop Computer'");
 }
+EOT_m8p
+#!end_m8p
 ```
 
-**Usage:**
-```rust
-TextFieldIndexing::default()
-    .set_tokenizer("edge_ngram")
-    .set_search_tokenizer("simple")
-```
+This test exposes three critical questions your handover docs don't answer:
 
-**Effect:** Separate tokenization at query time vs index time
+1. **Does `search_simple()` use the fork's edge ngram tokenizer at query time?** Your "QueryParser not tokenizing" issue suggests no.
 
-## Why Different?
+2. **Does multi-word query get correct semantics?** "gaming lap" should be `"gaming" AND "lap*"` (prefixLast), not PhraseQuery. That's Flapjack's job, not Tantivy's.
 
-**QueryMode approach:**
-- Changes query structure (PhraseQuery → BooleanQuery)
-- Requires modifying QueryParser query construction logic
-- More invasive code changes
-- Explicit control over query semantics
+3. **Does it work on nested JSON?** Your fork handles flat fields, but does Flapjack's document converter + query parser handle dot notation?
 
-**search_tokenizer approach:**
-- Changes query tokenization only
-- Leverages existing tokenizer infrastructure
-- Less code, simpler changes
-- Implicit query semantics via tokenizer choice
-
-**Decision rationale (inferred):**
-- Discovered during Phase 3 that PhraseQuery accidentally works
-- Realized problem was tokenization, not query structure
-- Simpler solution: different tokenizer at query time
-- Bypasses entire PhraseQuery issue
-
-## Trade-offs
-
-### QueryMode Advantages
-1. Explicit control over AND/OR/phrase semantics
-2. Works regardless of tokenizer
-3. Clear API for multi-word query behavior
-4. Matches Algolia's queryType parameter
-
-### search_tokenizer Advantages
-1. Less code to maintain
-2. Leverages existing tokenizer infrastructure
-3. No QueryParser query construction changes
-4. Simpler mental model
-
-### QueryMode Disadvantages
-1. More invasive changes to QueryParser
-2. Adds query structure complexity
-3. Potential interactions with other query features
-
-### search_tokenizer Disadvantages
-1. Implicit behavior (tokenizer controls query semantics)
-2. Doesn't address multi-word query modes directly
-3. May still need QueryMode for advanced features
-4. Less explicit API
-
-## Did We Build the Right Thing?
-
-**For single-word prefix search:** Yes
-- "lap" matches "Laptop" ✅
-- Simpler implementation ✅
-- All tests pass ✅
-
-**For multi-word queries:** Unknown
-- Spec called out prefixLast vs prefixAll
-- search_tokenizer doesn't address this
-- Flapjack may still need QueryMode
-
-**For Flapjack integration:** Unvalidated
-- Spec was written for Flapjack's needs
-- We diverged without testing Flapjack
-- May have solved wrong problem
-
-## Possible Outcomes
-
-### Scenario 1: search_tokenizer Sufficient
-- Flapjack test passes
-- Multi-word handled at Flapjack layer
-- QueryMode unnecessary
-- Ship as-is
-
-### Scenario 2: Need Both
-- search_tokenizer works for single-word
-- QueryMode still needed for multi-word semantics
-- Implement QueryMode as Phase 4
-- More work, but correct
-
-### Scenario 3: Wrong Abstraction
-- Flapjack needs different API entirely
-- search_tokenizer doesn't help
-- Revert, implement spec as written
-- 20 hours wasted
-
-## Recommendation
-
-**Before any more doc updates:**
-1. Write Flapjack integration test
-2. Test multi-word queries specifically
-3. Validate actual Flapjack requirements
-
-**If search_tokenizer insufficient:**
-- Implement QueryMode as originally spec'd
-- Keep search_tokenizer (still useful)
-- Document why both needed
-
-**If search_tokenizer sufficient:**
-- Update spec to reflect reality
-- Document why simpler approach works
-- Close QueryMode as unnecessary
-
-## Key Insight
-
-We optimized for Tantivy layer simplicity without validating Flapjack layer requirements. Classic systems integration risk.
-EOT_vM8
-#!end_vM8
-```
+Run this test. It will fail and tell you **where** the integration is broken - likely in how Flapjack constructs queries, not in Tantivy itself.
