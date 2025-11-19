@@ -2,7 +2,9 @@
 
 **Date:** 2025-11-19
 **Branch:** nov19
-**Status:** Phase 1 Complete ✅
+**Status:** Phase 1 Complete ✅ → Building e2e spike before Phase 2
+
+**Current task:** Validate EdgeNgramFilter indexing produces correct terms (no corruption) before investing in QueryBehavior. Previous fork had term structure bugs. Spike proves indexing works, then proceed to full integration tests.
 
 ## Phase 1: EdgeNgramFilter - COMPLETE
 

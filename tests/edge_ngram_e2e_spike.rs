@@ -1,37 +1,3 @@
-=== SLUPE RESULTS ===
-📋 Output copied to clipboard @ 04:31:53.276 pm
----------------------
-y4b ✅ replace_text_in_file /Users/stuart/repos/tantivy/stuart/STATUS.md
-z8c ✅ write_file /Users/stuart/repos/tantivy/tests/edge_ngram_e2e_spike.rs
-=== END ===
-```sh nesl
-#!nesl [@three-char-SHA-256: y4b]
-action = "replace_text_in_file"
-path = "/Users/stuart/repos/tantivy/stuart/STATUS.md"
-old_text = <<'EOT_y4b'
-# Tantivy Fork Status
-
-**Date:** 2025-11-19
-**Branch:** nov19
-**Status:** Phase 1 Complete ✅
-EOT_y4b
-new_text = <<'EOT_y4b'
-# Tantivy Fork Status
-
-**Date:** 2025-11-19
-**Branch:** nov19
-**Status:** Phase 1 Complete ✅ → Building e2e spike before Phase 2
-
-**Current task:** Validate EdgeNgramFilter indexing produces correct terms (no corruption) before investing in QueryBehavior. Previous fork had term structure bugs. Spike proves indexing works, then proceed to full integration tests.
-EOT_y4b
-#!end_y4b
-```
-
-```sh nesl
-#!nesl [@three-char-SHA-256: z8c]
-action = "write_file"
-path = "/Users/stuart/repos/tantivy/tests/edge_ngram_e2e_spike.rs"
-content = <<'EOT_z8c'
 use tantivy::schema::{JsonObjectOptions, Schema, TextFieldIndexing, IndexRecordOption};
 use tantivy::tokenizer::{LowerCaser, TextAnalyzer, WhitespaceTokenizer};
 use tantivy::{doc, Index, IndexWriter};
@@ -190,11 +156,3 @@ fn test_edge_ngram_multi_word_tokens() {
     assert_eq!(results_gam.len(), 1, "Should match 'Gaming' prefix");
     assert_eq!(results_lap.len(), 1, "Should match 'Laptop' prefix");
 }
-EOT_z8c
-#!end_z8c
-```
-
-```bash
-cd /Users/stuart/repos/tantivy
-cargo test --test edge_ngram_e2e_spike -- --nocapture
-```
