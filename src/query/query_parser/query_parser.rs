@@ -1008,10 +1008,10 @@ fn generate_literals_for_json_object(
         QueryParserError::FieldNotIndexed(field_name.to_string())
     })?;
     let mut text_analyzer = tokenizer_manager
-        .get(text_options.tokenizer())
+        .get(text_options.search_tokenizer())
         .ok_or_else(|| QueryParserError::UnknownTokenizer {
             field: field_name.to_string(),
-            tokenizer: text_options.tokenizer().to_string(),
+            tokenizer: text_options.search_tokenizer().to_string(),
         })?;
     let index_record_option = text_options.index_option();
     let mut logical_literals = Vec::new();
