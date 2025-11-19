@@ -1,15 +1,3 @@
-=== SLUPE RESULTS ===
-📋 Output copied to clipboard @ 04:00:12.594 pm
----------------------
-j9w ✅ write_file /Users/stuart/repos/tantivy/stuart/research/algolia_test_1/critical_test_v2.js
-=== END ===
-# API Version Mismatch - Manual Index Creation
-
-```sh nesl
-#!nesl [@three-char-SHA-256: j9w]
-action = "write_file"
-path = "/Users/stuart/repos/tantivy/stuart/research/algolia_test_1/critical_test_v2.js"
-content = <<'EOT_j9w'
 import { algoliasearch } from 'algoliasearch';
 import dotenv from 'dotenv';
 
@@ -85,12 +73,3 @@ async function test() {
 }
 
 test().catch(console.error);
-EOT_j9w
-#!end_j9w
-```
-
-```bash
-node critical_test_v2.js
-```
-
-Using `batch` API with explicit action types. If this fails, the API key may lack index creation permissions.
