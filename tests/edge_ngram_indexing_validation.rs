@@ -1,29 +1,3 @@
-=== SLUPE RESULTS ===
-📋 Output copied to clipboard @ 03:49:59.452 pm
----------------------
-p9x ✅ write_file /Users/stuart/repos/tantivy/tests/edge_ngram_indexing_validation.rs
-=== END ===
-# Upstream Validated ✅
-
-All tests pass as expected:
-- JSON TEXT fields work for exact matching
-- Tokenization works (multi-word values)
-- Case insensitivity works
-- Prefix search correctly fails (no edge ngrams)
-
-**Conclusion**: Upstream is healthy. Fork is justified.
-
----
-
-# Next: Edge Ngram Validation
-
-Before touching QueryParser, validate that edge ngrams actually index correctly with custom tokenizer.
-
-```sh nesl
-#!nesl [@three-char-SHA-256: p9x]
-action = "write_file"
-path = "/Users/stuart/repos/tantivy/tests/edge_ngram_indexing_validation.rs"
-content = <<'EOT_p9x'
 use tantivy::schema::{JsonObjectOptions, Schema, TextFieldIndexing, IndexRecordOption, STORED};
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer, WhitespaceTokenizer};
 use tantivy::{doc, Index, IndexWriter};
@@ -172,24 +146,3 @@ fn test_edge_ngram_query_parser_creates_phrase_query() {
     
     assert_eq!(results.len(), 0, "QueryParser should create PhraseQuery that fails (proves the bug)");
 }
-EOT_p9x
-#!end_p9x
-```
-
-Run:
-
-```bash
-cargo test --test edge_ngram_indexing_validation -- --nocapture
-```
-
-## What This Proves
-
-**Test 1**: Edge ngrams indexed correctly (`la`, `lap`, `lapt`, `laptop` all present)
-
-**Test 2**: Manual `TermQuery` for "lap" finds "Gaming Laptop" (proves terms work)
-
-**Test 3**: `QueryParser` query "lap" returns 0 hits (proves QueryParser is the problem)
-
-If all 3 pass, we've isolated the exact bug: QueryParser creates PhraseQuery when it should create BooleanQuery for edge-ngram fields.
-
-Share results.
