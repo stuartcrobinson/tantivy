@@ -476,10 +476,10 @@ impl QueryParser {
                 })?;
                 let mut text_analyzer =
                     self.tokenizer_manager
-                        .get(option.tokenizer())
+                        .get(option.search_tokenizer())
                         .ok_or_else(|| QueryParserError::UnknownTokenizer {
                             field: field_entry.name().to_string(),
-                            tokenizer: option.tokenizer().to_string(),
+                            tokenizer: option.search_tokenizer().to_string(),
                         })?;
                 let mut terms: Vec<Term> = Vec::new();
                 let mut token_stream = text_analyzer.token_stream(phrase);
@@ -580,10 +580,10 @@ impl QueryParser {
                 })?;
                 let mut text_analyzer = self
                     .tokenizer_manager
-                    .get(indexing_options.tokenizer())
+                    .get(indexing_options.search_tokenizer())
                     .ok_or_else(|| QueryParserError::UnknownTokenizer {
                         field: field_name.to_string(),
-                        tokenizer: indexing_options.tokenizer().to_string(),
+                        tokenizer: indexing_options.search_tokenizer().to_string(),
                     })?;
                 Ok(generate_literals_for_str(
                     field_name,
