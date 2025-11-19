@@ -60,7 +60,8 @@ fn test_backward_compat_missing_search_tokenizer() {
     
     let index = Index::create_in_ram(schema);
     let field = index.schema().get_field("data").unwrap();
-    let field_entry = index.schema().get_field_entry(field);
+    let schema = index.schema();
+    let field_entry = schema.get_field_entry(field);
     let json_opts = match field_entry.field_type() {
         tantivy::schema::FieldType::JsonObject(opts) => opts,
         _ => panic!("Expected JSON field"),
