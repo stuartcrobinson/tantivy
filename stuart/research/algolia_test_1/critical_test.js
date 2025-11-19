@@ -14,7 +14,7 @@ async function test() {
   console.log('=== CRITICAL: Multi-Word Prefix Behavior ===\n');
   
   await client.deleteIndex({ indexName }).catch(() => {});
-  await new Promise(r => setTimeout(r, 1000));
+  await new Promise(r => setTimeout(r, 2000));
   
   await client.saveObjects({
     indexName,

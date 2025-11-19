@@ -1,93 +1,31 @@
 === SLUPE RESULTS ===
-📋 Output copied to clipboard @ 03:58:57.449 pm
+📋 Output copied to clipboard @ 03:59:33.668 pm
 ---------------------
-m7q ✅ write_file /Users/stuart/repos/tantivy/stuart/research/algolia_test_1/critical_test.js
+k2p ✅ replace_text_in_file /Users/stuart/repos/tantivy/stuart/research/algolia_test_1/critical_test.js
 === END ===
-# Critical Algolia Behavior Test
+# Index Creation Race Condition
 
 ```sh nesl
-#!nesl [@three-char-SHA-256: m7q]
-action = "write_file"
+#!nesl [@three-char-SHA-256: k2p]
+action = "replace_text_in_file"
 path = "/Users/stuart/repos/tantivy/stuart/research/algolia_test_1/critical_test.js"
-content = <<'EOT_m7q'
-import { algoliasearch } from 'algoliasearch';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const client = algoliasearch(
-  process.env.ALGOLIA_APP_ID,
-  process.env.ALGOLIA_ADMIN_KEY
-);
-
-const indexName = 'prefix_behavior_test';
-
-async function test() {
-  console.log('=== CRITICAL: Multi-Word Prefix Behavior ===\n');
-  
+old_text = <<'EOT_k2p'
   await client.deleteIndex({ indexName }).catch(() => {});
   await new Promise(r => setTimeout(r, 1000));
   
   await client.saveObjects({
-    indexName,
-    objects: [
-      { objectID: '1', title: 'Gaming Laptop' },
-      { objectID: '2', title: 'Laptop Stand' },
-      { objectID: '3', title: 'Gaming Mouse' }
-    ]
-  });
-  
+EOT_k2p
+new_text = <<'EOT_k2p'
+  await client.deleteIndex({ indexName }).catch(() => {});
   await new Promise(r => setTimeout(r, 2000));
   
-  console.log('Document: {"title": "Gaming Laptop"}');
-  console.log('Question: Does prefix "lap" match?\n');
-  
-  const result = await client.search({ 
-    requests: [{ indexName, query: 'lap' }] 
-  });
-  
-  const hits = result.results[0].hits;
-  console.log(`Query "lap": ${hits.length} hits`);
-  
-  if (hits.length > 0) {
-    console.log('Matched documents:');
-    hits.forEach(h => console.log(`  - ${h.title}`));
-    console.log('\n✅ CONFIRMED: Algolia does per-word prefix matching');
-    console.log('   "lap" matches second word in "Gaming Laptop"');
-    console.log('   → Flapjack MUST implement EdgeNgramFilter\n');
-  } else {
-    console.log('❌ NO MATCH: Algolia does NOT match mid-string prefixes');
-    console.log('   → Can use simpler NgramTokenizer (full-text)\n');
-  }
-  
-  console.log('Test 2: Does "gam" match?');
-  const r2 = await client.search({ 
-    requests: [{ indexName, query: 'gam' }] 
-  });
-  console.log(`Query "gam": ${r2.results[0].hits.length} hits`);
-  console.log(`  Matches: ${r2.results[0].hits.map(h => h.title).join(', ')}`);
-  
-  console.log('\nTest 3: Does "mou" match "Gaming Mouse"?');
-  const r3 = await client.search({ 
-    requests: [{ indexName, query: 'mou' }] 
-  });
-  console.log(`Query "mou": ${r3.results[0].hits.length} hits`);
-  console.log(`  Matches: ${r3.results[0].hits.map(h => h.title).join(', ')}`);
-}
-
-test().catch(console.error);
-EOT_m7q
-#!end_m7q
+  await client.saveObjects({
+EOT_k2p
+#!end_k2p
 ```
 
-Run:
-
 ```bash
-cd /Users/stuart/repos/tantivy/stuart/research/algolia_test_1
-npm install
 node critical_test.js
 ```
 
-This test determines if we need custom EdgeNgramFilter or can use upstream NgramTokenizer.
-
-**Wait for result before writing implementation plan.** The answer dictates 6h vs 14h of work.
+Increased wait after delete. If still fails, index may not auto-create on saveObjects (API version difference). Share output.
