@@ -1,111 +1,85 @@
 # Tantivy Fork Status
 
 **Date:** 2025-11-19
-**Branch:** nov19 (clean)
-**Status:** Ready to begin Phase 1 implementation
+**Branch:** nov19
+**Status:** Phase 1 Complete ✅
+
+## Phase 1: EdgeNgramFilter - COMPLETE
+
+**File:** `src/tokenizer/edge_ngram_filter.rs` (190 lines)
+**Tests:** 6/6 passing
+**Time:** ~1 hour
+
+### Implementation
+- `TokenFilter` trait following `SplitCompoundWords` pattern
+- Generates edge ngrams per token (post-tokenization)
+- UTF-8 character boundary handling
+- Position preservation for phrase query compatibility
+
+### Validation
+```
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_simple ... ok
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_multi_word ... ok
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_utf8 ... ok
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_short_word ... ok
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_zero_min ... ok (panic test)
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_invalid_range ... ok (panic test)
+```
+
+### Key Findings
+- `NgramTokenizer` confirmed to operate on full text, not per-word
+- EdgeNgramFilter correctly operates on pre-tokenized words
+- "Gaming Laptop" → ["ga", "gam", "gami", "gamin", "gaming", "la", "lap", "lapt", "lapto", "laptop"]
+
+## Next: Phase 2 - Integration Tests (3h)
+
+**File:** `tests/edge_ngram_json_integration.rs`
+
+Tests needed:
+1. Indexing produces correct terms (verify no "title\0sla" corruption)
+2. Manual TermQuery works with edge ngrams
+3. QueryParser creates PhraseQuery (expected failure - documents bug)
+4. Multi-word values work correctly
+
+**Goal:** Isolate QueryParser bug before fixing it in Phase 3.
+
+## Phase 3: QueryBehavior Enum (8h)
+- Add enum to `src/schema/text_options.rs`
+- Modify `src/query/query_parser/query_parser.rs`
+- Fix QueryParser multi-token handling for edge ngrams
+
+## Phase 4: Documentation (2h)
+- Completion summary
+- Integration guide for Flapjack
+- Update this file with final results
 
 ## Validated Facts
 
-### Upstream Tantivy Behavior
+### Upstream Tantivy
 - JSON fields support custom tokenizers via `JsonObjectOptions::set_indexing_options()`
-- API already public, no schema changes needed
-- `NgramTokenizer` is a `Tokenizer` (not `TokenFilter`)
-- `NgramTokenizer` operates on **full text**, not per-word
-- Test: `tests/upstream_json_text_baseline.rs` - 4/4 passing
+- API already public
+- Test baseline: `tests/upstream_json_text_baseline.rs` (4/4 passing)
 
-### NgramTokenizer Limitation
-**Input:** "Gaming Laptop"
-**Output:** ["Ga", "Gam", "Gami", "Gamin", "Gaming", "Gaming ", "Gaming L", "Gaming La", "Gaming Lap"]
-**Query "lap":** Searches for standalone "lap" → NOT FOUND
-
-This matches Algolia validation findings. We need per-word edge ngrams.
-
-### Algolia Behavior (Empirically Validated)
+### Algolia Behavior
+- Per-word prefix matching confirmed
 - Query "lap" matches "Gaming Laptop" (2nd word)
-- Query "gam" matches "Gaming Mouse" (1st word)
 - Proof: `stuart/research/algolia_test_1/critical_test_v2.js`
-- **Conclusion:** Algolia does per-word prefix matching
 
-### What We Need
+### Implementation Architecture
+- EdgeNgramFilter as `TokenFilter` (not `Tokenizer`)
+- Must use `TextAnalyzer::builder().filter()` chain
+- Cannot use `NgramTokenizer` directly for per-word ngrams
 
-**EdgeNgramFilter** - TokenFilter that:
-- Operates on tokens AFTER WhitespaceTokenizer splits words
-- "Gaming" → ["ga", "gam", "gami", "gamin", "gaming"]
-- "Laptop" → ["la", "lap", "lapt", "lapto", "laptop"]
-- Pattern: Follow `SplitCompoundWords` (1-to-many token emission)
+## Files
 
-**QueryBehavior Enum** - Schema-level setting:
-- `Phrase` (default) - Current consecutive term requirement
-- `TermsOr` - OR'd term queries for edge ngrams
-- Needed because QueryParser creates PhraseQuery when tokenizer produces multiple terms
-- Edge ngrams are non-consecutive in multi-word values → phrase queries fail
+**Active:**
+- `src/tokenizer/edge_ngram_filter.rs` - Phase 1 implementation
+- `src/tokenizer/mod.rs` - Registration
+- `tests/upstream_json_text_baseline.rs` - Upstream validation
 
-## Implementation Path
+**Reference:**
+- `stuart/ALGOLIA_VALIDATION.md` - Algolia behavior proof
+- `stuart/IMPLEMENTATION_PLAN.md` - Phase details
+- `stuart/research/algolia_test_1/` - Empirical test code
 
-### Phase 1: EdgeNgramFilter (6h)
-**File:** `src/tokenizer/edge_ngram_filter.rs`
-
-Implement `TokenFilter` trait:
-- Generate ngrams from min_gram to max_gram per token
-- Preserve token positions (prevent false phrase matches)
-- Handle UTF-8 correctly (character boundaries)
-- Unit tests in same file
-
-**Sign-off:** `cargo test --lib tokenizer::edge_ngram_filter` passes
-
-### Phase 2: Integration Tests (3h)
-**File:** `tests/edge_ngram_json_integration.rs`
-
-1. Test indexing produces correct terms
-2. Test manual TermQuery works (isolates QueryParser bug)
-3. Test QueryParser creates PhraseQuery (expected failure - documents the bug)
-4. Test multi-word values
-
-**Sign-off:** Tests 1, 2, 4 pass; Test 3 fails as expected
-
-### Phase 3: QueryBehavior Enum (8h)
-**Files:**
-- `src/schema/text_options.rs` - Add enum + methods
-- `src/query/query_parser/query_parser.rs` - Respect setting
-
-**Sign-off:** All Phase 2 tests pass, no regressions in 943 upstream tests
-
-### Phase 4: Documentation (2h)
-- Update this file with completion summary
-- Document EdgeNgramFilter algorithm
-- Explain QueryBehavior use cases
-- Integration guide for Flapjack
-
-## Previous Fork Confusion
-
-First attempt hit term encoding issues ("title\0sla" corruption). Root cause was never resolved. That fork was deleted. Current session revealed:
-
-1. The test files from that attempt (`edge_ngram_indexing_validation.rs`) were syntactically wrong
-2. Used `NgramTokenizer` as a filter (type error - it's a Tokenizer)
-3. Would have failed anyway due to full-text ngram behavior
-
-Previous analysis docs are in flapjack repo for reference only. Don't trust implementation details.
-
-## Next Steps
-
-1. Implement EdgeNgramFilter following SplitCompoundWords pattern
-2. Write unit tests BEFORE integration
-3. Update this doc after each phase completion
-4. Document incrementally, not as separate phase
-
-## Files Status
-
-**Keep:**
-- `tests/upstream_json_text_baseline.rs` - Validates upstream behavior
-- `stuart/research/algolia_test_1/` - Algolia behavior proof
-- `stuart/ALGOLIA_VALIDATION.md` - Empirical findings
-- `stuart/IMPLEMENTATION_PLAN.md` - Phase checklist
-
-**Deleted:**
-- `tests/edge_ngram_indexing_validation.rs` - Broken syntax, wrong approach
-- `tests/test_upstream_json_text_tokenization.rs` - Broken syntax
-- `stuart/SESSION_2025_11_19_FRESH_START.md` - Superseded by this file
-
-**To Create:**
-- `src/tokenizer/edge_ngram_filter.rs` - Phase 1
-- `tests/edge_ngram_json_integration.rs` - Phase 2
+**Next:** Create `tests/edge_ngram_json_integration.rs`

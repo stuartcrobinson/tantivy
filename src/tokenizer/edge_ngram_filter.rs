@@ -1,11 +1,23 @@
 use super::{Token, TokenFilter, TokenStream, Tokenizer};
 
+/// TokenFilter that generates edge n-grams per token for prefix search.
+///
+/// Operates on individual tokens after whitespace tokenization, generating
+/// prefix substrings from min_gram to max_gram characters.
+///
+/// Example: "laptop" with min_gram=2, max_gram=6 produces:
+/// ["la", "lap", "lapt", "lapto", "laptop"]
 pub struct EdgeNgramFilter {
     min_gram: usize,
     max_gram: usize,
 }
 
 impl EdgeNgramFilter {
+    /// Creates a new EdgeNgramFilter.
+    ///
+    /// # Arguments
+    /// * `min_gram` - Minimum ngram length (must be > 0)
+    /// * `max_gram` - Maximum ngram length (must be >= min_gram)
     pub fn new(min_gram: usize, max_gram: usize) -> crate::Result<Self> {
         if min_gram == 0 {
             return Err(crate::TantivyError::InvalidArgument(

@@ -1,33 +1,142 @@
 === SLUPE RESULTS ===
-📋 Output copied to clipboard @ 04:25:09.716 pm
+📋 Output copied to clipboard @ 04:27:29.910 pm
 ---------------------
-v3y ✅ replace_text_in_file /Users/stuart/repos/tantivy/src/tokenizer/edge_ngram_filter.rs
+w7z ✅ replace_text_in_file /Users/stuart/repos/tantivy/src/tokenizer/edge_ngram_filter.rs
+x2a ✅ write_file /Users/stuart/repos/tantivy/stuart/STATUS.md
 === END ===
 ```sh nesl
-#!nesl [@three-char-SHA-256: v3y]
+#!nesl [@three-char-SHA-256: w7z]
 action = "replace_text_in_file"
 path = "/Users/stuart/repos/tantivy/src/tokenizer/edge_ngram_filter.rs"
-old_text = <<'EOT_v3y'
-pub struct EdgeNgramFilterWrapper<T> {
-    inner: T,
+old_text = <<'EOT_w7z'
+use super::{Token, TokenFilter, TokenStream, Tokenizer};
+
+pub struct EdgeNgramFilter {
     min_gram: usize,
     max_gram: usize,
-    ngrams: Vec<Token>,
 }
-EOT_v3y
-new_text = <<'EOT_v3y'
-#[derive(Clone)]
-pub struct EdgeNgramFilterWrapper<T> {
-    inner: T,
+
+impl EdgeNgramFilter {
+    pub fn new(min_gram: usize, max_gram: usize) -> crate::Result<Self> {
+EOT_w7z
+new_text = <<'EOT_w7z'
+use super::{Token, TokenFilter, TokenStream, Tokenizer};
+
+/// TokenFilter that generates edge n-grams per token for prefix search.
+///
+/// Operates on individual tokens after whitespace tokenization, generating
+/// prefix substrings from min_gram to max_gram characters.
+///
+/// Example: "laptop" with min_gram=2, max_gram=6 produces:
+/// ["la", "lap", "lapt", "lapto", "laptop"]
+pub struct EdgeNgramFilter {
     min_gram: usize,
     max_gram: usize,
-    ngrams: Vec<Token>,
 }
-EOT_v3y
-#!end_v3y
+
+impl EdgeNgramFilter {
+    /// Creates a new EdgeNgramFilter.
+    ///
+    /// # Arguments
+    /// * `min_gram` - Minimum ngram length (must be > 0)
+    /// * `max_gram` - Maximum ngram length (must be >= min_gram)
+    pub fn new(min_gram: usize, max_gram: usize) -> crate::Result<Self> {
+EOT_w7z
+#!end_w7z
 ```
 
-```bash
-cd /Users/stuart/repos/tantivy
-cargo test --lib tokenizer::edge_ngram_filter -- --nocapture
+```sh nesl
+#!nesl [@three-char-SHA-256: x2a]
+action = "write_file"
+path = "/Users/stuart/repos/tantivy/stuart/STATUS.md"
+content = <<'EOT_x2a'
+# Tantivy Fork Status
+
+**Date:** 2025-11-19
+**Branch:** nov19
+**Status:** Phase 1 Complete ✅
+
+## Phase 1: EdgeNgramFilter - COMPLETE
+
+**File:** `src/tokenizer/edge_ngram_filter.rs` (190 lines)
+**Tests:** 6/6 passing
+**Time:** ~1 hour
+
+### Implementation
+- `TokenFilter` trait following `SplitCompoundWords` pattern
+- Generates edge ngrams per token (post-tokenization)
+- UTF-8 character boundary handling
+- Position preservation for phrase query compatibility
+
+### Validation
 ```
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_simple ... ok
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_multi_word ... ok
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_utf8 ... ok
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_short_word ... ok
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_zero_min ... ok (panic test)
+test tokenizer::edge_ngram_filter::tests::test_edge_ngram_invalid_range ... ok (panic test)
+```
+
+### Key Findings
+- `NgramTokenizer` confirmed to operate on full text, not per-word
+- EdgeNgramFilter correctly operates on pre-tokenized words
+- "Gaming Laptop" → ["ga", "gam", "gami", "gamin", "gaming", "la", "lap", "lapt", "lapto", "laptop"]
+
+## Next: Phase 2 - Integration Tests (3h)
+
+**File:** `tests/edge_ngram_json_integration.rs`
+
+Tests needed:
+1. Indexing produces correct terms (verify no "title\0sla" corruption)
+2. Manual TermQuery works with edge ngrams
+3. QueryParser creates PhraseQuery (expected failure - documents bug)
+4. Multi-word values work correctly
+
+**Goal:** Isolate QueryParser bug before fixing it in Phase 3.
+
+## Phase 3: QueryBehavior Enum (8h)
+- Add enum to `src/schema/text_options.rs`
+- Modify `src/query/query_parser/query_parser.rs`
+- Fix QueryParser multi-token handling for edge ngrams
+
+## Phase 4: Documentation (2h)
+- Completion summary
+- Integration guide for Flapjack
+- Update this file with final results
+
+## Validated Facts
+
+### Upstream Tantivy
+- JSON fields support custom tokenizers via `JsonObjectOptions::set_indexing_options()`
+- API already public
+- Test baseline: `tests/upstream_json_text_baseline.rs` (4/4 passing)
+
+### Algolia Behavior
+- Per-word prefix matching confirmed
+- Query "lap" matches "Gaming Laptop" (2nd word)
+- Proof: `stuart/research/algolia_test_1/critical_test_v2.js`
+
+### Implementation Architecture
+- EdgeNgramFilter as `TokenFilter` (not `Tokenizer`)
+- Must use `TextAnalyzer::builder().filter()` chain
+- Cannot use `NgramTokenizer` directly for per-word ngrams
+
+## Files
+
+**Active:**
+- `src/tokenizer/edge_ngram_filter.rs` - Phase 1 implementation
+- `src/tokenizer/mod.rs` - Registration
+- `tests/upstream_json_text_baseline.rs` - Upstream validation
+
+**Reference:**
+- `stuart/ALGOLIA_VALIDATION.md` - Algolia behavior proof
+- `stuart/IMPLEMENTATION_PLAN.md` - Phase details
+- `stuart/research/algolia_test_1/` - Empirical test code
+
+**Next:** Create `tests/edge_ngram_json_integration.rs`
+EOT_x2a
+#!end_x2a
+```
+
+Phase 1 complete. Ready for Phase 2 integration tests. Should I proceed with creating the integration test file?
