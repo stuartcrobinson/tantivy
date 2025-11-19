@@ -1,10 +1,10 @@
 # Phase 3: QueryBehavior Implementation - Status
 
 **Date:** 2025-11-19
-**Status:** IN PROGRESS - Implementing QueryBehavior
-**Prerequisite:** EdgeNgramFilter complete ✅, 's' corruption accepted ✅
+**Status:** READY - Implementing QueryBehavior
+**Prerequisite:** EdgeNgramFilter complete ✅, term format understood ✅
 
-**Key decision:** Ship with 's' corruption (see `S_CORRUPTION_DECISION.md`). Zero functional impact, symmetric bug.
+**Cleared blocker:** 's' byte is not corruption - it's the correct Type::Str indicator. See `TERM_FORMAT_CLARIFICATION.md`.
 
 ## What's Working
 

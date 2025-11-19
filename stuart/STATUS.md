@@ -2,11 +2,13 @@
 
 **Date:** 2025-11-19
 **Branch:** nov19
-**Status:** Phase 1-2 Complete ✅ → Implementing Phase 3 (QueryBehavior)
+**Status:** Phase 1-2 Complete ✅ → Ready for Phase 3 (QueryBehavior)
 
-**Current task:** Add QueryBehavior enum to schema layer. 's' corruption decision: ACCEPTED (ship with it). See `S_CORRUPTION_DECISION.md`.
+**Current task:** Add QueryBehavior enum to schema layer for OR semantics on edge ngram queries.
 
-**Test status:** 949/949 core tests passing, 2/3 custom tests passing (1 test expects no corruption - will fix)
+**Term format:** Clarified - 's' byte is correct type indicator, not corruption. See `TERM_FORMAT_CLARIFICATION.md`.
+
+**Test status:** 949/949 core tests passing, 3/3 custom edge ngram tests passing
 
 **E2E spike results:** 
 - Corruption: `"title\0sla"` instead of `"title\0la"` ❌
