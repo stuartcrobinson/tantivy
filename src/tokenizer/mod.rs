@@ -144,6 +144,7 @@ pub use tokenizer_api::{BoxTokenStream, Token, TokenFilter, TokenStream, Tokeniz
 
 pub use self::alphanum_only::AlphaNumOnlyFilter;
 pub use self::ascii_folding_filter::AsciiFoldingFilter;
+pub use self::edge_ngram_filter::EdgeNgramFilter;
 pub use self::facet_tokenizer::FacetTokenizer;
 pub use self::lower_caser::LowerCaser;
 pub use self::ngram_tokenizer::NgramTokenizer;
