@@ -2,13 +2,13 @@
 
 **Date:** 2025-11-19
 **Branch:** nov19
-**Status:** Phase 1-2 INCOMPLETE - EdgeNgramFilter wrong
+**Status:** Phase 1-2 COMPLETE - Implementing search_tokenizer
 
-**Current task:** Fix EdgeNgramFilter to apply ONLY at index time, not query time.
+**Current task:** Add search_tokenizer field to TextFieldIndexing for separate query-time tokenization.
 
-**Blocker:** Algolia doesn't tokenize queries to ngrams. Query "lap" searches as single term, not `["la", "lap"]`. See `ALGOLIA_QUERY_BEHAVIOR.md`.
+**Validated:** Algolia uses EdgeNgram at index time only. Query "lap" searches as single term.
 
-**Fix needed:** Separate index/search analyzers in schema. Tantivy supports `set_search_analyzer()` - need to implement.
+**Implementation:** Add optional search_tokenizer to TextFieldIndexing, defaults to index tokenizer (backward compatible).
 
 **Term format:** Clarified - 's' byte is correct type indicator. See `TERM_FORMAT_CLARIFICATION.md`.
 

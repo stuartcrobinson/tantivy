@@ -1,14 +1,13 @@
 # Phase 3: QueryBehavior Implementation - Status
 
 **Date:** 2025-11-19
-**Status:** BLOCKED - EdgeNgramFilter implementation wrong
-**New blocker:** EdgeNgramFilter must NOT run on queries (only index time)
+**Status:** READY - EdgeNgramFilter correct, need search tokenizer
 
-**Discovery:** Algolia query "lap" searches as single term, not tokenized to `["la", "lap"]`. See `ALGOLIA_QUERY_BEHAVIOR.md`.
+**Validated:** EdgeNgramFilter works correctly at index time. Algolia uses separate search analyzer.
 
-**Required fix:** Configure separate search analyzer (no EdgeNgramFilter) via schema.
+**Implementation:** Add search_tokenizer field to TextFieldIndexing. Defaults to index tokenizer (no breaking changes).
 
-QueryBehavior implementation paused until analyzer separation fixed.
+Proceeding with Phase 3 implementation.
 
 ## What's Working
 
@@ -39,56 +38,38 @@ QueryParser creates PhraseQuery for multi-token inputs:
 
 ## The Solution
 
-Add schema-level QueryBehavior enum to control multi-token query construction:
+Add optional search_tokenizer field to TextFieldIndexing:
 
 ```rust
-pub enum QueryBehavior {
-    Phrase,    // Default: consecutive terms (existing behavior)
-    TermsOr,   // Edge ngrams: OR'd term queries
+pub struct TextFieldIndexing {
+    record: IndexRecordOption,
+    fieldnorms: bool,
+    tokenizer: TokenizerName,
+    search_tokenizer: Option<TokenizerName>,  // NEW
+}
+
+impl TextFieldIndexing {
+    pub fn set_search_tokenizer(mut self, name: &str) -> Self {
+        self.search_tokenizer = Some(TokenizerName::from_name(name));
+        self
+    }
+    
+    pub fn search_tokenizer(&self) -> &str {
+        self.search_tokenizer.as_ref()
+            .unwrap_or(&self.tokenizer)
+            .name()
+    }
 }
 ```
 
-When field uses `QueryBehavior::TermsOr`, QueryParser creates:
+Usage in Flapjack:
 ```rust
-BooleanQuery {
-    subqueries: [
-        (Should, TermQuery("la")),
-        (Should, TermQuery("lap"))
-    ]
-}
+TextFieldIndexing::default()
+    .set_tokenizer("edge_ngram")        // Index time
+    .set_search_tokenizer("simple")     // Query time
 ```
 
-## Implementation Checklist
-
-- [ ] Add enum to `src/schema/text_options.rs`
-- [ ] Extend `TextFieldIndexing` with getter/setter
-- [ ] Modify `src/query/query_parser/query_parser.rs`:
-  - [ ] Text field path (~line 960)
-  - [ ] JSON field path (~line 1040)
-- [ ] Schema serialization (skip_serializing_if default)
-- [ ] Update existing integration test to use TermsOr
-- [ ] Verify all upstream tests still pass
-
-## Files to Modify
-
-1. `src/schema/text_options.rs` - Add QueryBehavior enum
-2. `src/query/query_parser/query_parser.rs` - Check behavior before creating PhraseQuery
-3. `tests/edge_ngram_e2e_spike.rs` - Add QueryBehavior to schema config
-
-## Acceptance Criteria
-
-- [x] Query "lap" returns 1 hit on "Gaming Laptop" (already works via PhraseQuery accident)
-- [x] Query "gam" returns 1 hit on "Gaming Laptop" (already works)
-- [ ] QueryBehavior::TermsOr explicitly uses BooleanQuery (not relying on position accident)
-- [ ] Phrase queries still work on non-edge-ngram fields
-- [ ] cargo test passes (943+ tests)
-- [ ] No regressions in query_parser tests
-
-## Updated Understanding (2025-11-19)
-
-**Surprising finding:** Edge ngram queries already work via accidental PhraseQuery match.
-
-**Why implement QueryBehavior anyway?**
+**Why this solves the problem:**
 1. Current behavior is fragile (relies on position bug)
 2. Explicit OR semantics clearer than accidental phrase match
 3. Enables proper phrase query support if positions get fixed later

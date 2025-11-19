@@ -202,6 +202,8 @@ pub struct TextFieldIndexing {
     fieldnorms: bool,
     #[serde(default)]
     tokenizer: TokenizerName,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    search_tokenizer: Option<TokenizerName>,
 }
 
 pub(crate) fn default_fieldnorms() -> bool {
@@ -214,6 +216,7 @@ impl Default for TextFieldIndexing {
             tokenizer: TokenizerName::default(),
             record: IndexRecordOption::default(),
             fieldnorms: default_fieldnorms(),
+            search_tokenizer: None,
         }
     }
 }
@@ -229,6 +232,19 @@ impl TextFieldIndexing {
     /// Returns the tokenizer that will be used for this field.
     pub fn tokenizer(&self) -> &str {
         self.tokenizer.name()
+    }
+
+    #[must_use]
+    pub fn set_search_tokenizer(mut self, tokenizer_name: &str) -> TextFieldIndexing {
+        self.search_tokenizer = Some(TokenizerName::from_name(tokenizer_name));
+        self
+    }
+
+    pub fn search_tokenizer(&self) -> &str {
+        self.search_tokenizer
+            .as_ref()
+            .unwrap_or(&self.tokenizer)
+            .name()
     }
 
     /// Sets fieldnorms

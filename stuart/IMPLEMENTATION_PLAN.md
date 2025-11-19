@@ -93,56 +93,22 @@
 
 ---
 
-## Phase 3: QueryBehavior Enum (8h)
+## Phase 3: Search Tokenizer Support (4h)
 
-**Objective:** Add schema-level control of QueryParser multi-token behavior
+**Objective:** Add separate search-time tokenizer to TextFieldIndexing
 
 ### Tasks
 
-- [ ] Add enum to `src/schema/text_options.rs`
-```rust
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub enum QueryBehavior {
-    Phrase,    // Default: consecutive term requirement
-    TermsOr,   // Edge ngrams: OR'd term queries
-}
-
-impl Default for QueryBehavior {
-    fn default() -> Self { Self::Phrase }
-}
-```
-
-- [ ] Extend `TextFieldIndexing`
-```rust
-impl TextFieldIndexing {
-    pub fn set_query_behavior(mut self, behavior: QueryBehavior) -> Self {
-        self.query_behavior = behavior;
-        self
-    }
-    
-    pub fn query_behavior(&self) -> QueryBehavior {
-        self.query_behavior.clone()
-    }
-}
-```
-
-- [ ] Modify `src/query/query_parser/query_parser.rs`
-  - [ ] Find multi-token handling (~line 960 for text, ~1040 for JSON)
-  - [ ] Check field's `query_behavior` before creating PhraseQuery
-  - [ ] If `TermsOr`: create `BooleanQuery` with `Occur::Should` per term
-  - [ ] If `Phrase`: preserve existing behavior
-
-- [ ] Schema serialization
-  - [ ] Add `#[serde(skip_serializing_if = "is_default")]` to avoid meta.json bloat
-  - [ ] Verify roundtrip: serialize → deserialize preserves value
-
-- [ ] Update integration tests
-  - [ ] Modify Test 3 to use `QueryBehavior::TermsOr`
-  - [ ] Verify QueryParser now creates BooleanQuery
-  - [ ] Verify query returns 1 hit
+- [ ] Add `search_tokenizer: Option<TokenizerName>` to `TextFieldIndexing` struct
+- [ ] Add `set_search_tokenizer(name: &str)` method
+- [ ] Add `search_tokenizer()` getter (returns index tokenizer if search not set)
+- [ ] Modify QueryParser to use search_tokenizer when tokenizing queries
+- [ ] Update schema serialization (skip_serializing_if None)
+- [ ] Unit tests: search_tokenizer defaults to index tokenizer
+- [ ] Integration test: edge_ngram index + simple search = prefix matching works
 
 **Sign-off criteria:**
-- All tests pass (including previously failing Test 3)
+- Query "lap" matches "Laptop" when index=edge_ngram, search=simple
 - `cargo test` runs without regressions (943+ tests passing)
 - QueryParser respects field's query_behavior setting
 - Phrase mode still works for non-ngram fields
