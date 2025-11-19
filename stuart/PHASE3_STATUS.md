@@ -70,7 +70,24 @@ TextFieldIndexing::default()
 ```
 
 **Why this solves the problem:**
-1. Current behavior is fragile (relies on position bug)
-2. Explicit OR semantics clearer than accidental phrase match
-3. Enables proper phrase query support if positions get fixed later
-4. Algolia-compatible behavior (treats prefix as OR of ngrams, not phrase)
+- Query "lap" uses simple tokenizer (no ngrams) → single term "lap"
+- Index has "lap" from EdgeNgram tokenization of "Laptop"
+- Direct term match works correctly
+- Algolia-compatible behavior
+
+## Implementation Checklist
+
+- [x] Add search_tokenizer field to TextFieldIndexing struct
+- [x] Add set_search_tokenizer() and search_tokenizer() methods
+- [x] Fix const initializers (STRING, TEXT)
+- [ ] Modify QueryParser to call search_tokenizer() instead of tokenizer()
+- [ ] Unit test: search_tokenizer defaults to index tokenizer
+- [ ] Integration test: edge_ngram + simple = working prefix search
+
+## Acceptance Criteria
+
+- [ ] Query "lap" returns 1 hit on "Gaming Laptop" with separate search tokenizer
+- [ ] Query "gam" returns 1 hit on "Gaming Laptop"
+- [ ] Fields without search_tokenizer use index tokenizer (backward compatible)
+- [ ] Phrase queries still work on non-edge-ngram fields
+- [ ] cargo test passes (no regressions)
