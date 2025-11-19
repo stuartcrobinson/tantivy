@@ -1,0 +1,29 @@
+=== BUNDLER RESULTS ===
+Execution timestamp: 2025-11-19 15:37:45
+
+Successfully concatenated (10 files):
+  ✓ /Users/stuart/repos/flapjack202511/Cargo.toml
+  ✓ /Users/stuart/repos/flapjack202511/NESL_INSTRUCTIONS.md
+  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/COMPLETION_SUMMARY.md
+  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/FLAPJACK_INTEGRATION.md
+  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_BUG_FIX.md
+  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_COMPREHENSIVE_ANALYSIS.md
+  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/SESSION_2025_11_19.md
+  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/TANTIVY_FORK_SPECIFICATION.md
+  ✓ /Users/stuart/repos/flapjack202511/docs/HIGHEST_LEVEL.md
+  ✓ /Users/stuart/repos/flapjack202511/docs/PHASE1_CHECKLIST.md
+================================================================================
+Execution timestamp: 2025-11-19 13:27:39
+
+Successfully concatenated (16 files):
+  ✓ /Users/stuart/repos/flapjack202511/Cargo.toml
+  ✓ /Users/stuart/repos/flapjack202511/NESL_INSTRUCTIONS.md
+  ✓ /Users/stuart/repos/flapjack202511/docs/HIGHEST_LEVEL.md
+  ✓ /Users/stuart/repos/flapjack202511/docs/PHASE1_CHECKLIST.md
+
+  /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/COMPLETION_SUMMARY.md
+/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/FLAPJACK_INTEGRATION.md
+/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_BUG_FIX.md
+/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_COMPREHENSIVE_ANALYSIS.md
+/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/SESSION_2025_11_19.md
+/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/TANTIVY_FORK_SPECIFICATION.md
