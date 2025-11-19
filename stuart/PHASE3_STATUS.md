@@ -16,11 +16,20 @@
 QueryParser creates PhraseQuery for multi-token inputs:
 ```rust
 // User query: "lap"
-// EdgeNgram tokenizer produces: ["la", "lap"]
-// QueryParser creates: PhraseQuery(["la", "lap"]) requiring consecutive match
-// In "Gaming Laptop": "la" and "lap" exist but NOT consecutively
-// Result: 0 hits
+// EdgeNgram tokenizer produces: ["la", "lap"] at SAME position
+// QueryParser creates: PhraseQuery with offsets [(0, "la"), (0, "lap")]
+// In "Gaming Laptop": Both indexed at position 1
+// PhraseQuery matches because relative offsets align
+// Result: 1 hit (accidentally works!)
 ```
+
+**But this breaks with different query patterns:**
+```rust
+// If QueryParser used offsets [(0, "la"), (1, "lap")]:
+// Would require consecutive positions → 0 hits
+```
+
+**Real issue:** EdgeNgramFilter assigns same position to all ngrams from one word. PhraseQuery accidentally works because query and index have matching relative positions. Fragile - any change to QueryParser offset logic breaks it.
 
 ## The Solution
 
@@ -62,8 +71,19 @@ BooleanQuery {
 
 ## Acceptance Criteria
 
-- [ ] Query "lap" returns 1 hit on "Gaming Laptop"
-- [ ] Query "gam" returns 1 hit on "Gaming Laptop"
+- [x] Query "lap" returns 1 hit on "Gaming Laptop" (already works via PhraseQuery accident)
+- [x] Query "gam" returns 1 hit on "Gaming Laptop" (already works)
+- [ ] QueryBehavior::TermsOr explicitly uses BooleanQuery (not relying on position accident)
 - [ ] Phrase queries still work on non-edge-ngram fields
 - [ ] cargo test passes (943+ tests)
 - [ ] No regressions in query_parser tests
+
+## Updated Understanding (2025-11-19)
+
+**Surprising finding:** Edge ngram queries already work via accidental PhraseQuery match.
+
+**Why implement QueryBehavior anyway?**
+1. Current behavior is fragile (relies on position bug)
+2. Explicit OR semantics clearer than accidental phrase match
+3. Enables proper phrase query support if positions get fixed later
+4. Algolia-compatible behavior (treats prefix as OR of ngrams, not phrase)

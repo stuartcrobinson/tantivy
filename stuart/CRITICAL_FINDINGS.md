@@ -31,10 +31,19 @@ Test: `tests/edge_ngram_e2e_spike.rs::test_edge_ngram_indexing_no_corruption`
 
 **The corruption doesn't break queries.** Manual TermQuery construction with `Term::from_field_json_path()` + `append_type_and_str()` somehow matches the corrupted indexed terms.
 
-**Hypothesis:** Term matching is NOT byte-exact comparison. Either:
-1. Query construction also adds 's' incorrectly (both sides wrong, accidentally match)
-2. Term lookup normalizes/strips type byte during comparison
-3. Serialization layer reconciles the difference
+**Verified (2025-11-19 tests):**
+1. ✅ Query construction also adds 's': `"\0\0\0\0jtitle\0slap"` matches indexed `"title\0slap"`
+2. ✅ Both sides have 's' in identical position relative to path terminator
+3. ✅ Term lookup succeeds because corruption is symmetric
+
+**Position Bug Discovered:**
+- EdgeNgramFilter assigns SAME position to all ngrams from one word
+- "Gaming" → all tokens at position 0
+- "Laptop" → all tokens at position 1
+- PhraseQuery with offsets `[(0, "la"), (0, "lap")]` matches (1 hit)
+- PhraseQuery with offsets `[(0, "la"), (1, "lap")]` fails (0 hits)
+
+**Root cause:** EdgeNgramFilter reuses position from source token. Should increment position per ngram to prevent false phrase matches.
 
 ## Root Cause (from previous analysis)
 
@@ -101,16 +110,36 @@ During lookup, path string "title" gets converted to same unordered_id used duri
 
 ## What's Broken
 
-❌ Term byte encoding has 's' in wrong place
-❌ QueryParser creates PhraseQuery (returns 0 hits) - already known, needs QueryBehavior enum
+❌ Term byte encoding has 's' in wrong place (cosmetic, both sides match)
+❌ QueryParser creates PhraseQuery (confirmed via test_verify_query_term_bytes)
+❌ **EdgeNgramFilter position assignment** - reuses source token position instead of incrementing
+  - Causes false phrase matches when query has same relative offsets as ngrams
+  - QueryParser tokenizes "lap" → `["la", "lap"]` at same position
+  - Constructs PhraseQuery with offsets `[(0, "la"), (0, "lap")]` 
+  - Matches indexed terms both at position 1 → 1 hit
 
 ## Next Steps
 
-1. **Accept the corruption** - it's cosmetic and upstream's problem
-2. **Implement QueryBehavior enum** (Phase 3) - this is the real blocker
-3. **Test against Algolia** - validate end-to-end behavior
-4. **Ship to production** - corruption doesn't affect functionality
-5. **File upstream bug** - with test case showing corruption (but working queries)
+1. ✅ **Accept the corruption** - symmetric, both sides match
+2. ✅ **Validate PhraseQuery behavior** - confirmed via position tests
+3. ❌ **Fix EdgeNgramFilter position bug** - blocker discovered (not just QueryParser)
+4. **Decide approach:**
+   - **Option A:** Fix EdgeNgramFilter to increment positions, implement QueryBehavior for OR semantics
+   - **Option B:** Keep broken positions, rely on QueryBehavior to bypass PhraseQuery entirely
+5. **Test against Algolia** - validate end-to-end behavior
+6. **File upstream bugs** - corruption + position assignment issues
+
+## Open Questions
+
+**Q:** Should EdgeNgramFilter increment positions per ngram?
+- **Pro:** Prevents false phrase matches, semantically correct
+- **Con:** Breaks legitimate phrase queries on edge ngram fields (if anyone uses them)
+
+**Q:** Can we ship with broken positions if QueryBehavior::TermsOr bypasses PhraseQuery?
+- **Pro:** Simpler fix, QueryBehavior is sufficient
+- **Con:** Surprising behavior if user constructs manual PhraseQuery
+
+**Recommendation:** Implement QueryBehavior first (proven sufficient), defer position fix as enhancement.
 
 ## Files
 
