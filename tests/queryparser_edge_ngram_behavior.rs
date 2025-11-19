@@ -10,6 +10,7 @@ fn test_queryparser_phrase_query_on_edge_ngrams() {
     
     let text_indexing = TextFieldIndexing::default()
         .set_tokenizer("edge_ngram")
+        .set_search_tokenizer("simple")
         .set_index_option(IndexRecordOption::WithFreqsAndPositions);
     
     let json_options = JsonObjectOptions::default()
@@ -28,6 +29,11 @@ fn test_queryparser_phrase_query_on_edge_ngrams() {
     
     index.tokenizers().register("edge_ngram", tokenizer);
     
+    let simple_tokenizer = TextAnalyzer::builder(WhitespaceTokenizer::default())
+        .filter(LowerCaser)
+        .build();
+    index.tokenizers().register("simple", simple_tokenizer);
+    
     let mut writer: IndexWriter = index.writer(50_000_000).unwrap();
     let doc = doc!(json_field => serde_json::json!({"title": "Gaming Laptop"}));
     writer.add_document(doc).unwrap();
@@ -45,13 +51,11 @@ fn test_queryparser_phrase_query_on_edge_ngrams() {
     let results = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
     
     println!("\n=== EXPECTED BEHAVIOR ===");
-    println!("QueryParser tokenizes 'lap' → ['la', 'lap']");
-    println!("Creates PhraseQuery requiring consecutive terms");
-    println!("In 'Gaming Laptop': 'la' and 'lap' NOT consecutive");
-    println!("Expected hits: 0");
+    println!("Index: EdgeNgram tokenizer generates ['la', 'lap', 'lapt', 'lapto', 'laptop']");
+    println!("Query: Simple tokenizer generates ['lap'] (single term)");
+    println!("TermQuery for 'lap' matches indexed term 'lap'");
+    println!("Expected hits: 1");
     println!("Actual hits: {}", results.len());
     
-    // This SHOULD fail if QueryParser creates PhraseQuery
-    // If it passes, we have bigger questions about how matching works
-    assert_eq!(results.len(), 0, "PhraseQuery should fail on non-consecutive edge ngrams");
+    assert_eq!(results.len(), 1, "Query 'lap' should match 'Laptop' via prefix");
 }
