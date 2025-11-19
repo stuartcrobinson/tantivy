@@ -1,5 +1,6 @@
 use tantivy::schema::{JsonObjectOptions, Schema, TextFieldIndexing, IndexRecordOption};
 use tantivy::{Index, doc};
+use tantivy::tokenizer::{LowerCaser, TextAnalyzer, WhitespaceTokenizer};
 use tempfile::TempDir;
 
 #[test]
@@ -30,6 +31,18 @@ fn test_search_tokenizer_persists_across_reload() {
     };
     
     let reloaded_index = Index::open_in_dir(index_path).unwrap();
+    
+    let edge_ngram_tokenizer = TextAnalyzer::builder(WhitespaceTokenizer::default())
+        .filter(LowerCaser)
+        .filter(tantivy::tokenizer::EdgeNgramFilter::new(2, 10).unwrap())
+        .build();
+    reloaded_index.tokenizers().register("edge_ngram", edge_ngram_tokenizer);
+    
+    let simple_tokenizer = TextAnalyzer::builder(WhitespaceTokenizer::default())
+        .filter(LowerCaser)
+        .build();
+    reloaded_index.tokenizers().register("simple", simple_tokenizer);
+    
     let reloaded_schema = reloaded_index.schema();
     let reloaded_field = reloaded_schema.get_field_entry(json_field);
     
