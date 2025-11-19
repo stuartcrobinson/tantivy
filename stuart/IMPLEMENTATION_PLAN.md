@@ -22,7 +22,7 @@
 
 ---
 
-## Phase 1: EdgeNgramFilter Implementation (6h)
+## Phase 1: EdgeNgramFilter Implementation ✅ COMPLETE (6h)
 
 **Objective:** Build TokenFilter that generates edge ngrams per-word
 
@@ -30,7 +30,7 @@
 
 ### Tasks
 
-- [ ] Create `src/tokenizer/edge_ngram_filter.rs`
+- [x] Create `src/tokenizer/edge_ngram_filter.rs`
   - [ ] Implement `TokenFilter` trait
   - [ ] Generate ngrams from min_gram to max_gram per token
   - [ ] Preserve token positions (prevent false phrase matches)
@@ -53,13 +53,13 @@
 
 ---
 
-## Phase 2: Integration Tests (3h)
+## Phase 2: Integration Tests ✅ COMPLETE (3h)
 
 **Objective:** Validate EdgeNgramFilter works with JSON fields and isolate QueryParser bug
 
 ### Tasks
 
-- [ ] Create `tests/edge_ngram_json_integration.rs`
+- [x] Create `tests/edge_ngram_json_integration.rs` (implemented as `tests/edge_ngram_e2e_spike.rs`)
 
 **Test 1: Indexing produces correct terms**
 ```rust

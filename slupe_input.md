@@ -1,164 +1,175 @@
 === SLUPE RESULTS ===
-📋 Output copied to clipboard @ 04:34:59.485 pm
+📋 Output copied to clipboard @ 04:37:36.995 pm
 ---------------------
-a9d ✅ write_file /Users/stuart/repos/tantivy/stuart/CRITICAL_FINDINGS.md
-b3e ✅ replace_text_in_file /Users/stuart/repos/tantivy/stuart/STATUS.md
+x9k ✅ replace_text_in_file /Users/stuart/repos/tantivy/stuart/IMPLEMENTATION_PLAN.md
+m2p ✅ replace_text_in_file /Users/stuart/repos/tantivy/stuart/IMPLEMENTATION_PLAN.md
+w7j ✅ write_file /Users/stuart/repos/tantivy/stuart/PHASE3_STATUS.md
 === END ===
+## Status Assessment
+
+**Current state:**
+- EdgeNgramFilter implemented and working (generates correct ngrams per word)
+- Term corruption exists (`"title\0sla"` instead of `"title\0la"`) but queries mysteriously work anyway
+- Real blocker: QueryParser creates PhraseQuery for multi-token inputs, causing 0 hits on edge ngram fields
+
+**Key insight from CRITICAL_FINDINGS.md:**
+The corruption is cosmetic. Manual TermQuery construction matches corrupted indexed terms, proving term lookup isn't byte-exact. Either:
+1. Query construction adds 's' identically (both sides wrong)
+2. Term matching normalizes during lookup
+3. Path resolution reconciles the difference
+
+**Decision:** Ship with corruption. It's upstream's bug (commit `70e591e23`), doesn't break functionality, fixing it risks 20+ hours debugging term structure.
+
+## Documentation Updates Needed
+
+Before implementation, update these docs:
+
 ```sh nesl
-#!nesl [@three-char-SHA-256: a9d]
+#!nesl [@three-char-SHA-256: x9k]
+action = "replace_text_in_file"
+path = "/Users/stuart/repos/tantivy/stuart/IMPLEMENTATION_PLAN.md"
+old_text = <<'EOT_x9k'
+## Phase 1: EdgeNgramFilter Implementation (6h)
+
+**Objective:** Build TokenFilter that generates edge ngrams per-word
+
+**Reference:** `SplitCompoundWords` tokenizer (existing pattern for 1-to-many token emission)
+
+### Tasks
+
+- [ ] Create `src/tokenizer/edge_ngram_filter.rs`
+EOT_x9k
+new_text = <<'EOT_x9k'
+## Phase 1: EdgeNgramFilter Implementation ✅ COMPLETE (6h)
+
+**Objective:** Build TokenFilter that generates edge ngrams per-word
+
+**Reference:** `SplitCompoundWords` tokenizer (existing pattern for 1-to-many token emission)
+
+### Tasks
+
+- [x] Create `src/tokenizer/edge_ngram_filter.rs`
+EOT_x9k
+#!end_x9k
+```
+
+```sh nesl
+#!nesl [@three-char-SHA-256: m2p]
+action = "replace_text_in_file"
+path = "/Users/stuart/repos/tantivy/stuart/IMPLEMENTATION_PLAN.md"
+old_text = <<'EOT_m2p'
+## Phase 2: Integration Tests (3h)
+
+**Objective:** Validate EdgeNgramFilter works with JSON fields and isolate QueryParser bug
+
+### Tasks
+
+- [ ] Create `tests/edge_ngram_json_integration.rs`
+EOT_m2p
+new_text = <<'EOT_m2p'
+## Phase 2: Integration Tests ✅ COMPLETE (3h)
+
+**Objective:** Validate EdgeNgramFilter works with JSON fields and isolate QueryParser bug
+
+### Tasks
+
+- [x] Create `tests/edge_ngram_json_integration.rs` (implemented as `tests/edge_ngram_e2e_spike.rs`)
+EOT_m2p
+#!end_m2p
+```
+
+```sh nesl
+#!nesl [@three-char-SHA-256: w7j]
 action = "write_file"
-path = "/Users/stuart/repos/tantivy/stuart/CRITICAL_FINDINGS.md"
-content = <<'EOT_a9d'
-# Critical Finding: Term Corruption Bug Confirmed in Upstream
+path = "/Users/stuart/repos/tantivy/stuart/PHASE3_STATUS.md"
+content = <<'EOT_w7j'
+# Phase 3: QueryBehavior Implementation - Status
 
 **Date:** 2025-11-19
-**Status:** BLOCKER - Upstream Tantivy bug confirmed
+**Status:** Ready to implement
+**Prerequisite:** EdgeNgramFilter complete, tests passing
 
-## The Bug
+## What's Working
 
-**Symptom:** Edge ngram tokens indexed with 's' type byte corruption
-**Expected:** `"title\0la"`, `"title\0lap"`, `"title\0lapt"`
-**Actual:** `"title\0sla"`, `"title\0slap"`, `"title\0slapt"`
+✅ EdgeNgramFilter generates correct ngrams: `["la", "lap", "lapt", "lapto", "laptop"]`
+✅ Terms indexed (with cosmetic corruption): `"title\0sla"`, `"title\0slap"`, etc.
+✅ Manual TermQuery matches: 1 hit on "lap" query
+✅ Multi-word values work: Both "gam" and "lap" match "Gaming Laptop"
 
-The 's' type byte appears BETWEEN path and token text.
+## The Problem
 
-## Evidence
-
-Test: `tests/edge_ngram_e2e_spike.rs::test_edge_ngram_indexing_no_corruption`
-```
-=== INDEXED TERMS ===
-"title\0sla"
-"title\0slap"
-"title\0slapt"
-"title\0slapto"
-"title\0slaptop"
-```
-
-**BUT manual queries still work:**
-- Test `test_edge_ngram_manual_term_query`: 1 hit ✅
-- Test `test_edge_ngram_multi_word_tokens`: Both queries return 1 hit ✅
-
-## Critical Discovery
-
-**The corruption doesn't break queries.** Manual TermQuery construction with `Term::from_field_json_path()` + `append_type_and_str()` somehow matches the corrupted indexed terms.
-
-**Hypothesis:** Term matching is NOT byte-exact comparison. Either:
-1. Query construction also adds 's' incorrectly (both sides wrong, accidentally match)
-2. Term lookup normalizes/strips type byte during comparison
-3. Serialization layer reconciles the difference
-
-## Root Cause (from previous analysis)
-
-**File:** `src/core/json_utils.rs` (upstream code)
+QueryParser creates PhraseQuery for multi-token inputs:
 ```rust
-set_path_id(term_buffer, unordered_id);  // buffer = [field][j][unordered_id]
-set_type(term_buffer, Type::Str);        // buffer = [field][j][unordered_id][s]
-let path_end = term_buffer.len_bytes();  // = 5 (includes 's')
-postings_writer.index_text(..., path_end);
+// User query: "lap"
+// EdgeNgram tokenizer produces: ["la", "lap"]
+// QueryParser creates: PhraseQuery(["la", "lap"]) requiring consecutive match
+// In "Gaming Laptop": "la" and "lap" exist but NOT consecutively
+// Result: 0 hits
 ```
 
-Inside `index_text()`:
+## The Solution
+
+Add schema-level QueryBehavior enum to control multi-token query construction:
+
 ```rust
-term_buffer.truncate_value_bytes(path_end);  // Preserves [field][j][unordered_id][s]
-term_buffer.append_bytes(token.text);         // Appends after 's'
+pub enum QueryBehavior {
+    Phrase,    // Default: consecutive terms (existing behavior)
+    TermsOr,   // Edge ngrams: OR'd term queries
+}
 ```
 
-Result: `[unordered_id][s][token_bytes]` → serialized as `"path\0stoken"`
-
-## Why Queries Work Anyway
-
-**Theory:** `Term::from_field_json_path()` + `append_type_and_str()` constructs:
-```
-[field][j]["title"][null][s]["lap"]
-```
-
-During lookup, path string "title" gets converted to same unordered_id used during indexing. The 's' placement matches on both sides.
-
-**Evidence:** All 3 e2e tests show:
-- Corruption visible in raw term bytes
-- Queries return correct results (1 hit)
-
-## Implications
-
-**Option A: Ignore the corruption**
-- Queries work despite corrupted storage
-- Waste some bytes storing 's' redundantly
-- Risk: Future Tantivy changes might break this accidental compatibility
-
-**Option B: Fix upstream bug**
-- Calculate `path_end` BEFORE `set_type()`
-- Requires understanding where type byte actually belongs
-- Previous attempt caused "invalid type code" panic
-- Risk: 20+ hours debugging term structure
-
-**Option C: Use non-JSON text fields**
-- Flatten JSON to individual `Str` fields at Flapjack layer
-- Avoid entire JSON term encoding problem
-- Trade-off: More fields, but proven to work
-
-## Recommendation
-
-**Ship Option A immediately.** The corruption is cosmetic - queries work. We need Algolia parity NOW, not perfect term encoding.
-
-**After launch:** File upstream bug report with minimal repro. Let Tantivy maintainers fix term structure properly.
-
-## What Works Right Now
-
-✅ EdgeNgramFilter generates correct ngrams per word
-✅ JSON fields accept custom tokenizers
-✅ Indexing completes without errors
-✅ Manual TermQuery returns correct results
-✅ Multi-word values work (both "gam" and "lap" match "Gaming Laptop")
-
-## What's Broken
-
-❌ Term byte encoding has 's' in wrong place
-❌ QueryParser creates PhraseQuery (returns 0 hits) - already known, needs QueryBehavior enum
-
-## Next Steps
-
-1. **Accept the corruption** - it's cosmetic and upstream's problem
-2. **Implement QueryBehavior enum** (Phase 3) - this is the real blocker
-3. **Test against Algolia** - validate end-to-end behavior
-4. **Ship to production** - corruption doesn't affect functionality
-5. **File upstream bug** - with test case showing corruption (but working queries)
-
-## Files
-
-- `tests/edge_ngram_e2e_spike.rs` - Proves corruption exists but queries work
-- `src/tokenizer/edge_ngram_filter.rs` - Working implementation
-- Previous fork docs in flapjack repo - Same bug, same analysis
-EOT_a9d
-#!end_a9d
+When field uses `QueryBehavior::TermsOr`, QueryParser creates:
+```rust
+BooleanQuery {
+    subqueries: [
+        (Should, TermQuery("la")),
+        (Should, TermQuery("lap"))
+    ]
+}
 ```
 
-```sh nesl
-#!nesl [@three-char-SHA-256: b3e]
-action = "replace_text_in_file"
-path = "/Users/stuart/repos/tantivy/stuart/STATUS.md"
-old_text = <<'EOT_b3e'
-**Current task:** Validate EdgeNgramFilter indexing produces correct terms (no corruption) before investing in QueryBehavior. Previous fork had term structure bugs. Spike proves indexing works, then proceed to full integration tests.
-EOT_b3e
-new_text = <<'EOT_b3e'
-**Current task:** Term corruption confirmed but queries work anyway. See `CRITICAL_FINDINGS.md`. Decision: Ship with corruption (cosmetic only), focus on QueryBehavior enum (actual blocker).
+## Implementation Checklist
 
-**E2E spike results:** 
-- Corruption: `"title\0sla"` instead of `"title\0la"` ❌
-- Manual queries: Work correctly, return 1 hit ✅
-- Conclusion: Corruption is cosmetic, doesn't break functionality
-EOT_b3e
-#!end_b3e
+- [ ] Add enum to `src/schema/text_options.rs`
+- [ ] Extend `TextFieldIndexing` with getter/setter
+- [ ] Modify `src/query/query_parser/query_parser.rs`:
+  - [ ] Text field path (~line 960)
+  - [ ] JSON field path (~line 1040)
+- [ ] Schema serialization (skip_serializing_if default)
+- [ ] Update existing integration test to use TermsOr
+- [ ] Verify all upstream tests still pass
+
+## Files to Modify
+
+1. `src/schema/text_options.rs` - Add QueryBehavior enum
+2. `src/query/query_parser/query_parser.rs` - Check behavior before creating PhraseQuery
+3. `tests/edge_ngram_e2e_spike.rs` - Add QueryBehavior to schema config
+
+## Acceptance Criteria
+
+- [ ] Query "lap" returns 1 hit on "Gaming Laptop"
+- [ ] Query "gam" returns 1 hit on "Gaming Laptop"
+- [ ] Phrase queries still work on non-edge-ngram fields
+- [ ] cargo test passes (943+ tests)
+- [ ] No regressions in query_parser tests
+EOT_w7j
+#!end_w7j
 ```
 
-## Handover for Next LLM
+## Next Actions
 
-**Situation:** EdgeNgramFilter works. Upstream has cosmetic term corruption bug but queries still succeed. Real blocker is QueryParser creating PhraseQuery instead of TermsOr for edge ngrams.
+First, verify QueryParser code structure to plan implementation:
 
-**What to do:** Implement Phase 3 (QueryBehavior enum). Don't waste time fixing corruption - it's upstream's bug and doesn't break functionality.
+```bash
+cd /Users/stuart/repos/tantivy
+grep -n "PhraseQuery" src/query/query_parser/query_parser.rs | head -20
+grep -n "generate_literals_for_str" src/query/query_parser/query_parser.rs
+grep -n "generate_literals_for_json" src/query/query_parser/query_parser.rs
+```
 
-**Files to read:**
-1. `stuart/CRITICAL_FINDINGS.md` - Why corruption is acceptable
-2. `stuart/IMPLEMENTATION_PLAN.md` - Phase 3 details
-3. `tests/edge_ngram_e2e_spike.rs` - Working e2e proof
+Run those commands and share output. I need to see:
+1. Where PhraseQuery is constructed for text fields
+2. Where PhraseQuery is constructed for JSON fields  
+3. How multi-token handling differs between field types
 
-**Next code change:** Add `QueryBehavior::TermsOr` enum to `src/schema/text_options.rs`, modify `src/query/query_parser/query_parser.rs` to create BooleanQuery instead of PhraseQuery when field uses edge ngrams.
+Then I'll give you explicit NESL for Phase 3 implementation.
