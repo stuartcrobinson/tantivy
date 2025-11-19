@@ -33,7 +33,10 @@ fn test_search_tokenizer_persists_across_reload() {
     let reloaded_schema = reloaded_index.schema();
     let reloaded_field = reloaded_schema.get_field_entry(json_field);
     
-    let json_options = reloaded_field.field_type().as_json().unwrap();
+    let json_options = match reloaded_field.field_type() {
+        tantivy::schema::FieldType::JsonObject(opts) => opts,
+        _ => panic!("Expected JSON field"),
+    };
     let text_indexing = json_options.get_text_indexing_options().unwrap();
     
     assert_eq!(text_indexing.tokenizer(), "edge_ngram",
@@ -58,7 +61,10 @@ fn test_backward_compat_missing_search_tokenizer() {
     let index = Index::create_in_ram(schema);
     let field = index.schema().get_field("data").unwrap();
     let field_entry = index.schema().get_field_entry(field);
-    let json_opts = field_entry.field_type().as_json().unwrap();
+    let json_opts = match field_entry.field_type() {
+        tantivy::schema::FieldType::JsonObject(opts) => opts,
+        _ => panic!("Expected JSON field"),
+    };
     let indexing = json_opts.get_text_indexing_options().unwrap();
     
     assert_eq!(indexing.search_tokenizer(), "default",
