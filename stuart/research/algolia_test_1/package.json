@@ -1,0 +1,9 @@
+{
+  "name": "algolia_test_1",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "algoliasearch": "^5.0.0",
+    "dotenv": "^16.0.0"
+  }
+}

@@ -1,15 +1,3 @@
-=== SLUPE RESULTS ===
-📋 Output copied to clipboard @ 03:58:57.449 pm
----------------------
-m7q ✅ write_file /Users/stuart/repos/tantivy/stuart/research/algolia_test_1/critical_test.js
-=== END ===
-# Critical Algolia Behavior Test
-
-```sh nesl
-#!nesl [@three-char-SHA-256: m7q]
-action = "write_file"
-path = "/Users/stuart/repos/tantivy/stuart/research/algolia_test_1/critical_test.js"
-content = <<'EOT_m7q'
 import { algoliasearch } from 'algoliasearch';
 import dotenv from 'dotenv';
 
@@ -76,18 +64,3 @@ async function test() {
 }
 
 test().catch(console.error);
-EOT_m7q
-#!end_m7q
-```
-
-Run:
-
-```bash
-cd /Users/stuart/repos/tantivy/stuart/research/algolia_test_1
-npm install
-node critical_test.js
-```
-
-This test determines if we need custom EdgeNgramFilter or can use upstream NgramTokenizer.
-
-**Wait for result before writing implementation plan.** The answer dictates 6h vs 14h of work.
