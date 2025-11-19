@@ -12,7 +12,7 @@ const indexName = 'prefix_behavior_test';
 
 async function test() {
   console.log('=== CRITICAL: Multi-Word Prefix Behavior ===\n');
-  
+
   try {
     await client.deleteIndex({ indexName });
     console.log('Deleted existing index');
@@ -20,7 +20,7 @@ async function test() {
   } catch (e) {
     console.log('No existing index to delete');
   }
-  
+
   console.log('Creating index and adding documents...');
   await client.batch({
     indexName,
@@ -28,24 +28,25 @@ async function test() {
       requests: [
         { action: 'addObject', body: { objectID: '1', title: 'Gaming Laptop' } },
         { action: 'addObject', body: { objectID: '2', title: 'Laptop Stand' } },
-        { action: 'addObject', body: { objectID: '3', title: 'Gaming Mouse' } }
+        { action: 'addObject', body: { objectID: '3', title: 'Gaming Mouse' } },
+        { action: 'addObject', body: { objectID: '4', title: 'La' } }
       ]
     }
   });
-  
+
   console.log('Waiting for indexing...');
   await new Promise(r => setTimeout(r, 3000));
-  
+
   console.log('\nDocument: {"title": "Gaming Laptop"}');
   console.log('Question: Does prefix "lap" match?\n');
-  
-  const result = await client.search({ 
-    requests: [{ indexName, query: 'lap' }] 
+
+  const result = await client.search({
+    requests: [{ indexName, query: 'lap' }]
   });
-  
+
   const hits = result.results[0].hits;
   console.log(`Query "lap": ${hits.length} hits`);
-  
+
   if (hits.length > 0) {
     console.log('Matched documents:');
     hits.forEach(h => console.log(`  - ${h.title}`));
@@ -56,20 +57,45 @@ async function test() {
     console.log('❌ NO MATCH: Algolia does NOT match mid-string prefixes');
     console.log('   → Can use simpler NgramTokenizer (full-text)\n');
   }
-  
+
   console.log('Test 2: Does "gam" match?');
-  const r2 = await client.search({ 
-    requests: [{ indexName, query: 'gam' }] 
+  const r2 = await client.search({
+    requests: [{ indexName, query: 'gam' }]
   });
   console.log(`Query "gam": ${r2.results[0].hits.length} hits`);
   console.log(`  Matches: ${r2.results[0].hits.map(h => h.title).join(', ')}`);
-  
+
   console.log('\nTest 3: Does "mou" match "Gaming Mouse"?');
-  const r3 = await client.search({ 
-    requests: [{ indexName, query: 'mou' }] 
+  const r3 = await client.search({
+    requests: [{ indexName, query: 'mou' }]
   });
   console.log(`Query "mou": ${r3.results[0].hits.length} hits`);
   console.log(`  Matches: ${r3.results[0].hits.map(h => h.title).join(', ')}`);
+
+  console.log('\nTest 4: Does "la" (incomplete prefix) match "Laptop"?');
+  const result4 = await client.search({
+    requests: [{ indexName, query: 'la' }]
+  });
+  console.log(`Query "la": ${result4.results[0].hits.length} hits`);
+  if (result4.results[0].hits.length > 0) {
+    console.log('  Matches:', result4.results[0].hits.map(h => h.title).join(', '));
+  }
+
+  console.log('\nTest 5: Does "lap" match document "La" (only has "la" ngram)?');
+  const result5 = await client.search({
+    requests: [{ indexName, query: 'lap' }]
+  });
+  const hasLa = result5.results[0].hits.some(h => h.title === 'La');
+  console.log(`Query "lap" matches "La": ${hasLa}`);
+  if (hasLa) {
+    console.log('→ Query IS tokenized to ngrams ["la", "lap"]');
+    console.log('→ EdgeNgramFilter needed on BOTH index and query');
+  } else {
+    console.log('→ Query stays as single term "lap"');
+    console.log('→ EdgeNgramFilter ONLY on index, NOT on query');
+  }
 }
+
+
 
 test().catch(console.error);
