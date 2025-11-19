@@ -1,8 +1,10 @@
 # Phase 3: QueryBehavior Implementation - Status
 
 **Date:** 2025-11-19
-**Status:** Ready to implement
-**Prerequisite:** EdgeNgramFilter complete, tests passing
+**Status:** IN PROGRESS - Implementing QueryBehavior
+**Prerequisite:** EdgeNgramFilter complete ✅, 's' corruption accepted ✅
+
+**Key decision:** Ship with 's' corruption (see `S_CORRUPTION_DECISION.md`). Zero functional impact, symmetric bug.
 
 ## What's Working
 

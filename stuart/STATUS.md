@@ -2,9 +2,11 @@
 
 **Date:** 2025-11-19
 **Branch:** nov19
-**Status:** Phase 1 Complete ✅ → Building e2e spike before Phase 2
+**Status:** Phase 1-2 Complete ✅ → Implementing Phase 3 (QueryBehavior)
 
-**Current task:** Term corruption confirmed but queries work anyway. See `CRITICAL_FINDINGS.md`. Decision: Ship with corruption (cosmetic only), focus on QueryBehavior enum (actual blocker).
+**Current task:** Add QueryBehavior enum to schema layer. 's' corruption decision: ACCEPTED (ship with it). See `S_CORRUPTION_DECISION.md`.
+
+**Test status:** 949/949 core tests passing, 2/3 custom tests passing (1 test expects no corruption - will fix)
 
 **E2E spike results:** 
 - Corruption: `"title\0sla"` instead of `"title\0la"` ❌

@@ -1,53 +1,21 @@
 === BUNDLER RESULTS ===
-Execution timestamp: 2025-11-19 16:35:13
+Execution timestamp: 2025-11-19 16:50:16
 
-Successfully concatenated (13 files):
-  ✓ /Users/stuart/repos/flapjack202511/Cargo.toml
-  ✓ /Users/stuart/repos/flapjack202511/NESL_INSTRUCTIONS.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/COMPLETION_SUMMARY.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/FLAPJACK_INTEGRATION.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_BUG_FIX.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_COMPREHENSIVE_ANALYSIS.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/SESSION_2025_11_19.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/TANTIVY_FORK_SPECIFICATION.md
-  ✓ /Users/stuart/repos/flapjack202511/docs/HIGHEST_LEVEL.md
-  ✓ /Users/stuart/repos/flapjack202511/docs/PHASE1_CHECKLIST.md
-  ✓ /Users/stuart/repos/tantivy/stuart/CRITICAL_FINDINGS.md
-  ✓ /Users/stuart/repos/tantivy/stuart/IMPLEMENTATION_PLAN.md
+Successfully concatenated (4 files):
+  ✓ /Users/stuart/repos/tantivy/NESL_INSTRUCTIONS.md
+  ✓ /Users/stuart/repos/tantivy/tests/check_token_positions.rs
   ✓ /Users/stuart/repos/tantivy/tests/edge_ngram_e2e_spike.rs
+  ✓ /Users/stuart/repos/tantivy/tests/phrase_query_position_debug.rs
 ================================================================================
-Execution timestamp: 2025-11-19 15:37:45
-
-Files to read:
-
-stuart/CRITICAL_FINDINGS.md - Why corruption is acceptable
-stuart/IMPLEMENTATION_PLAN.md - Phase 3 details
-tests/edge_ngram_e2e_spike.rs - Working e2e proof
-
-Next code change: Add QueryBehavior::TermsOr enum to
-Successfully concatenated (10 files):
-  ✓ /Users/stuart/repos/flapjack202511/Cargo.toml
-  ✓ /Users/stuart/repos/flapjack202511/NESL_INSTRUCTIONS.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/COMPLETION_SUMMARY.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/FLAPJACK_INTEGRATION.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_BUG_FIX.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_COMPREHENSIVE_ANALYSIS.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/SESSION_2025_11_19.md
-  ✓ /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/TANTIVY_FORK_SPECIFICATION.md
-  ✓ /Users/stuart/repos/flapjack202511/docs/HIGHEST_LEVEL.md
-  ✓ /Users/stuart/repos/flapjack202511/docs/PHASE1_CHECKLIST.md
+Execution timestamp: 2025-11-19 16:50:08
+/Users/stuart/repos/tantivy/NESL_INSTRUCTIONS.md
+Successfully concatenated (3 files):
+  ✓ /Users/stuart/repos/tantivy/tests/check_token_positions.rs
+  ✓ /Users/stuart/repos/tantivy/tests/edge_ngram_e2e_spike.rs
+  ✓ /Users/stuart/repos/tantivy/tests/phrase_query_position_debug.rs
 ================================================================================
-Execution timestamp: 2025-11-19 13:27:39
 
-Successfully concatenated (16 files):
-  ✓ /Users/stuart/repos/flapjack202511/Cargo.toml
-  ✓ /Users/stuart/repos/flapjack202511/NESL_INSTRUCTIONS.md
-  ✓ /Users/stuart/repos/flapjack202511/docs/HIGHEST_LEVEL.md
-  ✓ /Users/stuart/repos/flapjack202511/docs/PHASE1_CHECKLIST.md
-
-  /Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/COMPLETION_SUMMARY.md
-/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/FLAPJACK_INTEGRATION.md
-/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_BUG_FIX.md
-/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/JSON_TEXT_TOKENIZATION_COMPREHENSIVE_ANALYSIS.md
-/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/SESSION_2025_11_19.md
-/Users/stuart/repos/flapjack202511/deep_dives/phase_2/0_dynamic_schema/from_first_tantivy_fork_failure/stuart/TANTIVY_FORK_SPECIFICATION.md
+**Reference:**
+- `tests/edge_ngram_e2e_spike.rs` - Working end-to-end proof
+- `tests/check_token_positions.rs` - Documents position bug
+- `tests/phrase_query_position_debug.rs` - Proves PhraseQuery behavior
