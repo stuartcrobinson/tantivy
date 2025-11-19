@@ -1,25 +1,31 @@
 === SLUPE RESULTS ===
-📋 Output copied to clipboard @ 04:24:26.250 pm
+📋 Output copied to clipboard @ 04:25:09.716 pm
 ---------------------
-u9x ✅ replace_text_in_file /Users/stuart/repos/tantivy/src/tokenizer/mod.rs
+v3y ✅ replace_text_in_file /Users/stuart/repos/tantivy/src/tokenizer/edge_ngram_filter.rs
 === END ===
 ```sh nesl
-#!nesl [@three-char-SHA-256: u9x]
+#!nesl [@three-char-SHA-256: v3y]
 action = "replace_text_in_file"
-path = "/Users/stuart/repos/tantivy/src/tokenizer/mod.rs"
-old_text = <<'EOT_u9x'
-pub use self::alphanum_only::AlphaNumOnlyFilter;
-pub use self::ascii_folding_filter::AsciiFoldingFilter;
-EOT_u9x
-new_text = <<'EOT_u9x'
-pub use self::alphanum_only::AlphaNumOnlyFilter;
-pub use self::ascii_folding_filter::AsciiFoldingFilter;
-pub use self::edge_ngram_filter::EdgeNgramFilter;
-EOT_u9x
-#!end_u9x
+path = "/Users/stuart/repos/tantivy/src/tokenizer/edge_ngram_filter.rs"
+old_text = <<'EOT_v3y'
+pub struct EdgeNgramFilterWrapper<T> {
+    inner: T,
+    min_gram: usize,
+    max_gram: usize,
+    ngrams: Vec<Token>,
+}
+EOT_v3y
+new_text = <<'EOT_v3y'
+#[derive(Clone)]
+pub struct EdgeNgramFilterWrapper<T> {
+    inner: T,
+    min_gram: usize,
+    max_gram: usize,
+    ngrams: Vec<Token>,
+}
+EOT_v3y
+#!end_v3y
 ```
-
-Now test:
 
 ```bash
 cd /Users/stuart/repos/tantivy

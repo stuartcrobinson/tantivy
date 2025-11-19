@@ -34,6 +34,7 @@ impl TokenFilter for EdgeNgramFilter {
     }
 }
 
+#[derive(Clone)]
 pub struct EdgeNgramFilterWrapper<T> {
     inner: T,
     min_gram: usize,
