@@ -2,13 +2,15 @@
 
 **Date:** 2025-11-19
 **Branch:** nov19
-**Status:** Phase 1-2 Complete ✅ → Ready for Phase 3 (QueryBehavior)
+**Status:** Phase 1-2 INCOMPLETE - EdgeNgramFilter wrong
 
-**Current task:** Add QueryBehavior enum to schema layer for OR semantics on edge ngram queries.
+**Current task:** Fix EdgeNgramFilter to apply ONLY at index time, not query time.
 
-**Term format:** Clarified - 's' byte is correct type indicator, not corruption. See `TERM_FORMAT_CLARIFICATION.md`.
+**Blocker:** Algolia doesn't tokenize queries to ngrams. Query "lap" searches as single term, not `["la", "lap"]`. See `ALGOLIA_QUERY_BEHAVIOR.md`.
 
-**Test status:** 949/949 core tests passing, 3/3 custom edge ngram tests passing
+**Fix needed:** Separate index/search analyzers in schema. Tantivy supports `set_search_analyzer()` - need to implement.
+
+**Term format:** Clarified - 's' byte is correct type indicator. See `TERM_FORMAT_CLARIFICATION.md`.
 
 **E2E spike results:** 
 - Corruption: `"title\0sla"` instead of `"title\0la"` ❌

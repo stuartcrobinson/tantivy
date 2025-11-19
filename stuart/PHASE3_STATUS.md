@@ -1,10 +1,14 @@
 # Phase 3: QueryBehavior Implementation - Status
 
 **Date:** 2025-11-19
-**Status:** READY - Implementing QueryBehavior
-**Prerequisite:** EdgeNgramFilter complete ✅, term format understood ✅
+**Status:** BLOCKED - EdgeNgramFilter implementation wrong
+**New blocker:** EdgeNgramFilter must NOT run on queries (only index time)
 
-**Cleared blocker:** 's' byte is not corruption - it's the correct Type::Str indicator. See `TERM_FORMAT_CLARIFICATION.md`.
+**Discovery:** Algolia query "lap" searches as single term, not tokenized to `["la", "lap"]`. See `ALGOLIA_QUERY_BEHAVIOR.md`.
+
+**Required fix:** Configure separate search analyzer (no EdgeNgramFilter) via schema.
+
+QueryBehavior implementation paused until analyzer separation fixed.
 
 ## What's Working
 
