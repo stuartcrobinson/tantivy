@@ -1,13 +1,3 @@
-=== SLUPE RESULTS ===
-📋 Output copied to clipboard @ 04:15:07.388 pm
----------------------
-k7m ✅ write_file /Users/stuart/repos/tantivy/tests/test_upstream_json_text_tokenization.rs
-=== END ===
-```sh nesl
-#!nesl [@three-char-SHA-256: k7m]
-action = "write_file"
-path = "/Users/stuart/repos/tantivy/tests/test_upstream_json_text_tokenization.rs"
-content = <<'EOT_k7m'
 use tantivy::schema::{JsonObjectOptions, Schema, INDEXED, STORED, TEXT};
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer, WhitespaceTokenizer};
 use tantivy::{doc, Index, IndexWriter};
@@ -115,18 +105,3 @@ fn test_upstream_json_text_default_tokenizer() {
     
     assert!(!terms_list.is_empty(), "Should have indexed terms");
 }
-EOT_k7m
-#!end_k7m
-```
-
-```bash
-cd /Users/stuart/repos/tantivy
-cargo test --test test_upstream_json_text_tokenization -- --nocapture
-```
-
-This will show us:
-1. Does upstream even support custom tokenizers on JSON fields? (first test might not compile or might ignore the tokenizer)
-2. If it does, are terms corrupted with the 's' byte issue?
-3. What does the default tokenizer produce for comparison?
-
-Run it and paste the full output.
