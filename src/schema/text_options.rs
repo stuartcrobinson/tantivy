@@ -234,12 +234,23 @@ impl TextFieldIndexing {
         self.tokenizer.name()
     }
 
+    /// Sets the tokenizer to be used at query time for this field.
+    ///
+    /// If not set, defaults to the index-time tokenizer. This is useful for fields
+    /// that use different tokenization at index vs query time, such as edge ngram
+    /// fields where you want prefix matching (edge ngrams at index time) but exact
+    /// term matching at query time.
     #[must_use]
     pub fn set_search_tokenizer(mut self, tokenizer_name: &str) -> TextFieldIndexing {
         self.search_tokenizer = Some(TokenizerName::from_name(tokenizer_name));
         self
     }
 
+    /// Returns the tokenizer that will be used for query parsing on this field.
+    ///
+    /// If a search tokenizer was explicitly set, returns that. Otherwise returns
+    /// the index-time tokenizer (ensuring queries and indexing use the same
+    /// tokenization by default).
     pub fn search_tokenizer(&self) -> &str {
         self.search_tokenizer
             .as_ref()
